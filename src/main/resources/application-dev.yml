@@ -1,0 +1,5 @@
+gwclient:
+  soap:
+    url: http://tmsxuat.bolnet.gov.la:7080/GWClientMUService/GWClientMU
+    username: SENDER22XXXX
+    password: your_password
