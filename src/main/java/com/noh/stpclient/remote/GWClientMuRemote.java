@@ -5,7 +5,6 @@ import com.noh.stpclient.model.xml.LogonResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ws.client.core.support.WebServiceGatewaySupport;
-import org.springframework.ws.soap.client.core.SoapActionCallback;
 
 /**
  * Client for GWClientMU SOAP Service.
@@ -15,9 +14,6 @@ public class GWClientMuRemote extends WebServiceGatewaySupport {
 
     private static final Logger logger = LoggerFactory.getLogger(GWClientMuRemote.class);
 
-    // Namespace matches the 'xmlns:int' in your sample request
-    private static final String NAMESPACE = "http://integration.gwclient.smallsystems.cma.se/";
-
     public LogonResponse logon(String username, String password) {
         logger.info("Initiating SOAP Logon for user: {}", username);
 
@@ -25,13 +21,11 @@ public class GWClientMuRemote extends WebServiceGatewaySupport {
         request.setUsername(username);
         request.setPassword(password);
 
-        // The SoapActionCallback is often optional depending on the server,
-        // but good practice to include if the WSDL defines specific actions.
-        // Assuming action pattern based on namespace + operation.
-        final SoapActionCallback actionCallback = new SoapActionCallback(NAMESPACE + "logon");
-
+        // Removed explicit SoapActionCallback as the server rejected the constructed one.
+        // Spring Web Services will typically send an empty SOAPAction "" by default,
+        // or the server will dispatch based on the request payload body.
         return (LogonResponse) getWebServiceTemplate()
-                .marshalSendAndReceive(request, actionCallback);
+                .marshalSendAndReceive(request);
     }
 
     // Placeholder for Logout

@@ -1,9 +1,11 @@
 package com.noh.stpclient.config;
 
+import com.noh.stpclient.config.interceptor.SoapPayloadLoggingInterceptor;
 import com.noh.stpclient.remote.GWClientMuRemote;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
+import org.springframework.ws.client.support.interceptor.ClientInterceptor;
 
 @Configuration
 public class SoapClientConfig {
@@ -22,11 +24,15 @@ public class SoapClientConfig {
     }
 
     @Bean
-    public GWClientMuRemote gwClientMuRemote(Jaxb2Marshaller marshaller) {
+    public GWClientMuRemote gwClientMuRemote(final Jaxb2Marshaller marshaller) {
         final GWClientMuRemote client = new GWClientMuRemote();
         client.setDefaultUri(TARGET_URL);
         client.setMarshaller(marshaller);
         client.setUnmarshaller(marshaller);
+        // Register the interceptor to log all outgoing/incoming SOAP messages
+        client.setInterceptors(new ClientInterceptor[]{new SoapPayloadLoggingInterceptor()});
+        // Set the custom fault message resolver
+        client.getWebServiceTemplate().setFaultMessageResolver(new CustomSoapFaultMessageResolver());
         return client;
     }
 }

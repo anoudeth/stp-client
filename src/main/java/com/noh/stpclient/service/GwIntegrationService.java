@@ -1,7 +1,11 @@
 package com.noh.stpclient.service;
+
+import com.noh.stpclient.exception.GatewayIntegrationException;
+import com.noh.stpclient.model.ServiceResult;
 import com.noh.stpclient.model.xml.LogonResponse;
 import com.noh.stpclient.remote.GWClientMuRemote;
-import lombok.RequiredArgsConstructor;
+import com.noh.stpclient.web.dto.LogonResponseDto;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -12,9 +16,8 @@ import org.springframework.util.Assert;
  * Orchestrates calls to the SOAP Client.
  */
 @Service
+@Slf4j
 public class GwIntegrationService {
-
-    private static final Logger logger = LoggerFactory.getLogger(GwIntegrationService.class);
     private final GWClientMuRemote soapClient;
 
     public GwIntegrationService(GWClientMuRemote soapClient) {
@@ -28,24 +31,30 @@ public class GwIntegrationService {
      * @param password The service password
      * @return The session ID from the response
      * @throws IllegalArgumentException if credentials are empty
-     * @throws RuntimeException if SOAP call fails
+     * @throws RuntimeException         if SOAP call fails
      */
-    public String performLogon(String username, String password) {
-        Assert.hasText(username, "Username must not be empty");
-        Assert.hasText(password, "Password must not be empty");
+    public ServiceResult<LogonResponseDto> performLogon(String username, String password) {
 
         try {
-            logger.debug("Attempting logon for user: {}", username);
+            log.debug("Attempting logon for user: {}", username);
 
             final LogonResponse response = soapClient.logon(username, password);
 
             if (response == null || response.getSessionId() == null) {
-                throw new RuntimeException("Received empty session ID from Gateway");
+                return ServiceResult.failure("unknown.unable.to.process.code", "Received empty session ID from Gateway");
             }
 
-            return response.getSessionId();
+            LogonResponseDto output = new LogonResponseDto(response.getSessionId());
+
+            return ServiceResult.success(output);
+
+        } catch (GatewayIntegrationException e) {
+//            log.error("GWIntegrationService failed to perform logon for user {}", username, e);
+//            return ServiceResult.failure("unknown.unable.to.process.code", e.getMessage());
+            throw e;
         } catch (Exception e) {
-            logger.error("Logon failed for user: {}", username, e);
+            log.error("Logon failed for user: {}", username, e);
+//            return ServiceResult.failure("unknown.unable.to.process.code", e.getMessage());
             throw new RuntimeException("Gateway Logon Failed", e);
         }
     }

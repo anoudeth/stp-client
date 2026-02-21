@@ -7,3 +7,6 @@ server:
     context-path: /stp-client
   error:
     include-message: always
+logging:
+  level:
+    com.noh.stpclient.config.interceptor: DEBUG
