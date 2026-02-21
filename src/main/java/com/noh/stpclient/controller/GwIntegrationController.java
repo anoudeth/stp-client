@@ -1,6 +1,7 @@
 package com.noh.stpclient.controller;
 
 import com.noh.stpclient.exception.GatewayIntegrationException;
+import com.noh.stpclient.model.ApiRequest;
 import com.noh.stpclient.model.ApiResponse;
 import com.noh.stpclient.model.ServiceResult;
 import com.noh.stpclient.service.GwIntegrationService;
@@ -41,13 +42,14 @@ public class GwIntegrationController {
      * @return A ResponseEntity containing the session ID on success, or an error status.
      */
     @PostMapping("/logon")
-    public ResponseEntity<?> logon(@Valid @RequestBody LogonRequest request) {
-        log.info(">> START logon request: {}", request.toString());
+    public ResponseEntity<?> logon(@Valid @RequestBody ApiRequest<LogonRequest> request) {
+        log.info(">> START logon");
+        log.info("> request body: {}", request);
         ApiResponse<LogonResponseDto> finalResponse = new ApiResponse<>();
         ServiceResult<LogonResponseDto> serviceResult = new ServiceResult<>();
         try {
 
-            serviceResult = gwIntegrationService.performLogon(request.username(), request.password());
+            serviceResult = gwIntegrationService.performLogon(request.getData().username(), request.getData().password());
 
             if (serviceResult.isSuccess()) {
                 finalResponse = responseBuilder.buildSuccessResponse(serviceResult.getData(), null, Locale.getDefault());
@@ -60,7 +62,7 @@ public class GwIntegrationController {
             return ResponseEntity.ok(finalResponse);
 
         } catch (IllegalArgumentException e) {
-            log.warn("Validation error during logon for user {}: {}", request.username(), e.getMessage());
+            log.warn("Validation error during logon for user {}: {}", request.getData().username(), e.getMessage());
             finalResponse = responseBuilder.buildFailureResponse(
                     ServiceResult.failure("unknown.unable.to.process.code", e.getMessage())
                     , null
@@ -69,7 +71,7 @@ public class GwIntegrationController {
             return ResponseEntity.badRequest().body(finalResponse);
 
         } catch (GatewayIntegrationException e) {
-            log.error("Gateway error during logon for user {}: Code={}, Desc={}, Info={}", request.username(), e.getCode(), e.getDescription(), e.getInfo());
+            log.error("Gateway error during logon for user {}: Code={}, Desc={}, Info={}", request.getData().username(), e.getCode(), e.getDescription(), e.getInfo());
 
             finalResponse = responseBuilder.buildFailureResponse(
                     ServiceResult.failure(e.getCode(), e.getMessage())
@@ -81,7 +83,7 @@ public class GwIntegrationController {
 //            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).build();
 
         } catch (RuntimeException e) {
-            log.error("Unexpected error during logon for user {}: {}", request.username(), e.getMessage());
+            log.error("Unexpected error during logon for user {}: {}", request.getData().username(), e.getMessage());
 
             finalResponse = responseBuilder.buildFailureResponse(
                     ServiceResult.failure("", e.getMessage())
