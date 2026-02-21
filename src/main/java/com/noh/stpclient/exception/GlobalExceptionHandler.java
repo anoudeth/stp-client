@@ -52,10 +52,10 @@ public class GlobalExceptionHandler {
                 .build();
 
         ErrorResponse response = ErrorResponse.builder()
-                .responseCode("400")
-                .responseMessage("Bad Request")
-                .responseStatus(EResponseStatus.FAILED)
-                .responseTimestamp(Instant.now())
+                .resCode("400")
+                .resMessage("Bad Request")
+                .resStatus(EResponseStatus.FAILED)
+                .resTimestamp(Instant.now())
                 .processingTime(0L)
                 .error(errorDetails)  // Need to uncomment this field in BaseResponse
                 .build();

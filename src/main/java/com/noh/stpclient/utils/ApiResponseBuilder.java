@@ -33,10 +33,10 @@ public class ApiResponseBuilder {
      */
     public <T> ApiResponse<T> buildSuccessResponse(T data, ClientInfo clientInfo, Locale locale) {
         return ApiResponse.<T>builder()
-                .responseCode(msgSource.getMessage("success.completed.code", null, "0000", locale))
-                .responseMessage(msgSource.getMessage("success.completed.msg", null, "Success", locale))
-                .responseStatus(EResponseStatus.SUCCESS)
-                .responseTimestamp(Instant.now())
+                .resCode(msgSource.getMessage("success.completed.code", null, "0000", locale))
+                .resMessage(msgSource.getMessage("success.completed.msg", null, "Success", locale))
+                .resStatus(EResponseStatus.SUCCESS)
+                .resTimestamp(Instant.now())
                 .clientInfo(clientInfo)
                 .data(data)
                 .build();
@@ -82,11 +82,11 @@ public class ApiResponseBuilder {
         );
 
         return ApiResponse.<T>builder()
-                .responseCode(responseCode)
-                .responseMessage(responseMessage)
-                .responseStatus(EResponseStatus.FAILED)
+                .resCode(responseCode)
+                .resMessage(responseMessage)
+                .resStatus(EResponseStatus.FAILED)
                 .clientInfo(clientInfo)
-                .responseTimestamp(Instant.now())
+                .resTimestamp(Instant.now())
 //                .data(serviceResult.getData())
                 // NOTE: We intentionally do not include 'data' in a failure response.
                 .build();

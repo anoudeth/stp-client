@@ -12,7 +12,7 @@ import lombok.experimental.SuperBuilder;
 import java.time.Instant;
 
 /**
- * Base response structure for all API responses
+ * Base res structure for all API ress
  */
 @Data
 @SuperBuilder
@@ -21,27 +21,27 @@ import java.time.Instant;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public abstract class BaseResponse<T> {
 
-    @JsonProperty("responseCode")
-    private String responseCode;
+    @JsonProperty("resCode")
+    private String resCode;
 
-    @JsonProperty("responseMessage")
-    private String responseMessage;
+    @JsonProperty("resMessage")
+    private String resMessage;
 
-    @JsonProperty("responseStatus")
-    private EResponseStatus responseStatus;      // OK, FAILED, PENDING, PARTIAL_SUCCESS
+    @JsonProperty("resStatus")
+    private EResponseStatus resStatus;      // OK, FAILED, PENDING, PARTIAL_SUCCESS
 
     @JsonProperty("requestId")
     private String requestId;
 
-    @JsonProperty("responseId")
-    private String responseId;
+    @JsonProperty("resId")
+    private String resId;
 
     @JsonProperty("requestTimestamp")
     private Instant requestTimestamp;
 
-    @JsonProperty("responseTimestamp")
-    @NotBlank(message = "Response timestamp is required")
-    private Instant responseTimestamp;
+    @JsonProperty("resTimestamp")
+    @NotBlank(message = "res timestamp is required")
+    private Instant resTimestamp;
 
     @JsonProperty("processingTime")
     private Long processingTime; // in milliseconds

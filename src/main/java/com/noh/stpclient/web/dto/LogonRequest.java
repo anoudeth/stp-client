@@ -13,4 +13,14 @@ public record LogonRequest(
         String username,
         @NotBlank(message = "Password cannot be blank")
         String password
-) {}
+) {
+    @Override
+    public String toString() {
+        return """
+               {
+                 "username": "%s",
+                 "password": "******"
+               }
+               """.formatted(username, password);
+    }
+}
