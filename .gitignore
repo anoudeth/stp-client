@@ -32,3 +32,4 @@ build/
 ### VS Code ###
 .vscode/
 /logs/
+/STPG_MU_WebServices .pdf
