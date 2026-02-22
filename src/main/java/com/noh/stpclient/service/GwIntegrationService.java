@@ -3,10 +3,15 @@ package com.noh.stpclient.service;
 import com.noh.stpclient.exception.GatewayIntegrationException;
 import com.noh.stpclient.model.ServiceResult;
 import com.noh.stpclient.model.xml.LogonResponse;
+import com.noh.stpclient.model.xml.Send;
 import com.noh.stpclient.remote.GWClientMuRemote;
 import com.noh.stpclient.web.dto.LogonResponseDto;
+import com.noh.stpclient.web.dto.SendRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 /**
  * Service layer for Gateway Integration.
@@ -16,72 +21,99 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class GwIntegrationService {
 
+    private static final Logger logger = LoggerFactory.getLogger(GwIntegrationService.class);
     private final GWClientMuRemote soapClient;
 
-    public GwIntegrationService(final GWClientMuRemote soapClient) {
+    public GwIntegrationService(GWClientMuRemote soapClient) {
         this.soapClient = soapClient;
     }
 
-    /**
-     * Authenticates with the Gateway Service.
-     *
-     * @param username The service username
-     * @param password The service password
-     * @return The session ID from the response
-     * @throws IllegalArgumentException if credentials are empty
-     * @throws RuntimeException         if SOAP call fails
-     */
-    public ServiceResult<LogonResponseDto> performLogon(final String username, final String password) {
+    public ServiceResult<LogonResponseDto> performLogon(String username, String password) {
+        Assert.hasText(username, "Username must not be empty");
+        Assert.hasText(password, "Password must not be empty");
+
         try {
             log.debug("Attempting logon for user: {}", username);
-            final var response = soapClient.logon(username, password);
+
+            final LogonResponse response = soapClient.logon(username, password);
 
             if (response == null || response.getSessionId() == null) {
-                return ServiceResult.failure("unknown.unable.to.process.code", "Received empty session ID from Gateway");
+                return ServiceResult.failure("GW-001", "Received empty session ID from Gateway");
             }
+
             return ServiceResult.success(new LogonResponseDto(response.getSessionId()));
-        } catch (final GatewayIntegrationException e) {
-            throw e;
-        } catch (final Exception e) {
+        } catch (GatewayIntegrationException e) {
+            log.error(e.getMessage());
+            return ServiceResult.failure(e.getCode(), e.getInfo());
+        } catch (Exception e) {
             log.error("Logon failed for user: {}", username, e);
-            throw new RuntimeException("Gateway Logon Failed", e);
+            return ServiceResult.failure("GW-999", "Gateway Logon Failed");
         }
     }
 
-    /**
-     * Logs out the session.
-     * @param sessionId The session to invalidate.
-     */
-    public void performLogout(final String sessionId) {
-        log.debug("Attempting logout for session: {}", sessionId);
-        soapClient.logout(sessionId);
+    public ServiceResult<Void> performLogout(String sessionId) {
+        Assert.hasText(sessionId, "Session ID must not be empty");
+        try {
+            soapClient.logout(sessionId);
+            return ServiceResult.success(null);
+        } catch (GatewayIntegrationException e) {
+            return ServiceResult.failure(e.getCode(), e.getDescription());
+        } catch (Exception e) {
+            log.error("Logout failed for session: {}", sessionId, e);
+            return ServiceResult.failure("GW-999", "Gateway Logout Failed");
+        }
     }
 
-    /**
-     * Retrieves updates for the given session.
-     * @param sessionId The active session ID.
-     */
-    public void getUpdates(final String sessionId) {
-        log.debug("Fetching updates for session: {}", sessionId);
-        soapClient.getUpdates(sessionId);
+    public ServiceResult<Void> performGetUpdates(String sessionId) {
+        Assert.hasText(sessionId, "Session ID must not be empty");
+        try {
+            soapClient.getUpdates(sessionId);
+            return ServiceResult.success(null);
+        } catch (GatewayIntegrationException e) {
+            return ServiceResult.failure(e.getCode(), e.getDescription());
+        } catch (Exception e) {
+            log.error("GetUpdates failed for session: {}", sessionId, e);
+            return ServiceResult.failure("GW-999", "Gateway GetUpdates Failed");
+        }
     }
 
-    /**
-     * Sends a payload to the gateway.
-     * @param payload The data to send.
-     */
-    public void send(final Object payload) {
-        log.debug("Sending payload to gateway");
-        soapClient.send(payload);
+    public ServiceResult<Void> performSend(SendRequest request) {
+        Assert.notNull(request, "Send request cannot be null");
+        Assert.hasText(request.sessionId(), "Session ID must not be empty");
+        Assert.notNull(request.message(), "Message content cannot be null");
+
+        try {
+            Send soapRequest = new Send();
+            soapRequest.setSessionId(request.sessionId());
+            Send.Message soapMessage = new Send.Message();
+            soapMessage.setBlock4(request.message().block4());
+            soapMessage.setMsgReceiver(request.message().msgReceiver());
+            soapMessage.setMsgSender(request.message().msgSender());
+            soapMessage.setMsgType(request.message().msgType());
+            soapMessage.setMsgUserReference(request.message().msgUserReference());
+            soapMessage.setFormat(request.message().format());
+            soapRequest.setMessage(soapMessage);
+
+            soapClient.send(soapRequest);
+            return ServiceResult.success(null);
+        } catch (GatewayIntegrationException e) {
+            return ServiceResult.failure(e.getCode(), e.getDescription());
+        } catch (Exception e) {
+            log.error("Send failed for session: {}", request.sessionId(), e);
+            return ServiceResult.failure("GW-999", "Gateway Send Failed");
+        }
     }
 
-    /**
-     * Sends an ACK or NAK for a specific message.
-     * @param messageId The message ID to acknowledge.
-     * @param isAck True for ACK, False for NAK.
-     */
-    public void sendAckNak(final String messageId, final boolean isAck) {
-        log.debug("Sending ACK/NAK for msg: {}, isAck: {}", messageId, isAck);
-        soapClient.sendAckNak(messageId, isAck);
+    public ServiceResult<Void> performSendAckNak(String messageId, boolean isAck) {
+        Assert.hasText(messageId, "Message ID must not be empty");
+        try {
+            soapClient.sendAckNak(messageId, isAck);
+            return ServiceResult.success(null);
+        } catch (GatewayIntegrationException e) {
+            return ServiceResult.failure(e.getCode(), e.getDescription());
+        } catch (Exception e) {
+            log.error("SendAckNak failed for message: {}", messageId, e);
+            return ServiceResult.failure("GW-999", "Gateway SendAckNak Failed");
+        }
     }
 }

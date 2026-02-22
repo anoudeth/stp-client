@@ -6,14 +6,15 @@ import com.noh.stpclient.model.ApiResponse;
 import com.noh.stpclient.model.ServiceResult;
 import com.noh.stpclient.service.GwIntegrationService;
 import com.noh.stpclient.utils.ApiResponseBuilder;
+import com.noh.stpclient.web.dto.GetUpdatesRequest;
 import com.noh.stpclient.web.dto.LogonRequest;
 import com.noh.stpclient.web.dto.LogonResponseDto;
+import com.noh.stpclient.web.dto.LogoutRequest;
+import com.noh.stpclient.web.dto.SendRequest;
+import com.noh.stpclient.web.dto.SendAckNakRequest;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,10 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Locale;
 
-/**
- * REST Controller for Gateway integration operations.
- * Handles incoming HTTP requests related to Gateway services.
- */
 @RestController
 @RequestMapping("/gw")
 @Slf4j
@@ -33,66 +30,110 @@ import java.util.Locale;
 public class GwIntegrationController {
 
     private final GwIntegrationService gwIntegrationService;
-    private final ApiResponseBuilder responseBuilder; // 1. Inject the new builder
+    private final ApiResponseBuilder responseBuilder;
 
-    /**
-     * Handles the POST request for user logon to the Gateway.
-     *
-     * @param request The logon request containing username and password.
-     * @return A ResponseEntity containing the session ID on success, or an error status.
-     */
     @PostMapping("/logon")
-    public ResponseEntity<?> logon(@Valid @RequestBody ApiRequest<LogonRequest> request) {
+    public ResponseEntity<ApiResponse<LogonResponseDto>> logon(@Valid @RequestBody ApiRequest<LogonRequest> request) {
         log.info(">>> START logon >>>");
         log.info("> request body: {}", request);
-        ApiResponse<LogonResponseDto> finalResponse = new ApiResponse<>();
-        ServiceResult<LogonResponseDto> serviceResult = new ServiceResult<>();
-        try {
 
-            serviceResult = gwIntegrationService.performLogon(request.getData().username(), request.getData().password());
-
-            if (serviceResult.isSuccess()) {
-                finalResponse = responseBuilder.buildSuccessResponse(serviceResult.getData(), null, Locale.getDefault());
-            } else {
-                finalResponse = responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
-            }
-
-            log.info("< Final response: {}", finalResponse);
-
-            return ResponseEntity.ok(finalResponse);
-
-        } catch (IllegalArgumentException e) {
-            log.warn("Validation error during logon for user {}: {}", request.getData().username(), e.getMessage());
-            finalResponse = responseBuilder.buildFailureResponse(
-                    ServiceResult.failure("unknown.unable.to.process.code", e.getMessage())
-                    , null
-                    , Locale.getDefault());
-//            return ResponseEntity.badRequest().build();
+        if (request.getData() == null) {
+            ApiResponse<LogonResponseDto> finalResponse = responseBuilder.buildFailureResponse(
+                    ServiceResult.failure("VALIDATION-001", "Request data cannot be null"), null, Locale.getDefault());
             return ResponseEntity.badRequest().body(finalResponse);
-
-        } catch (GatewayIntegrationException e) {
-            log.error("Gateway error during logon for user {}: Code={}, Desc={}, Info={}", request.getData().username(), e.getCode(), e.getDescription(), e.getInfo());
-
-            finalResponse = responseBuilder.buildFailureResponse(
-                    ServiceResult.failure(e.getCode(), e.getMessage())
-                    , null
-                    , Locale.getDefault());
-
-            return ResponseEntity.badRequest().body(finalResponse);
-            // Return 502 Bad Gateway for upstream errors
-//            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).build();
-
-        } catch (RuntimeException e) {
-            log.error("Unexpected error during logon for user {}: {}", request.getData().username(), e.getMessage());
-
-            finalResponse = responseBuilder.buildFailureResponse(
-                    ServiceResult.failure("", e.getMessage())
-                    , null
-                    , Locale.getDefault());
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(finalResponse);
-        } finally {
-            log.info("<<< END logon request <<<");
         }
+
+        ServiceResult<LogonResponseDto> serviceResult = gwIntegrationService.performLogon(request.getData().username(), request.getData().password());
+        ApiResponse<LogonResponseDto> finalResponse = serviceResult.isSuccess()
+                ? responseBuilder.buildSuccessResponse(serviceResult.getData(), null, Locale.getDefault())
+                : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
+
+        log.info("< Final response: {}", finalResponse);
+        log.info("<<< END logon request <<<");
+        return ResponseEntity.ok(finalResponse);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(@Valid @RequestBody ApiRequest<LogoutRequest> request) {
+        log.info(">>> START logout >>>");
+        log.info("> request body: {}", request);
+
+        if (request.getData() == null) {
+            ApiResponse<Void> finalResponse = responseBuilder.buildFailureResponse(
+                    ServiceResult.failure("VALIDATION-001", "Request data cannot be null"), null, Locale.getDefault());
+            return ResponseEntity.badRequest().body(finalResponse);
+        }
+
+        ServiceResult<Void> serviceResult = gwIntegrationService.performLogout(request.getData().sessionId());
+        ApiResponse<Void> finalResponse = serviceResult.isSuccess()
+                ? responseBuilder.buildSuccessResponse(null, null, Locale.getDefault())
+                : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
+
+        log.info("< Final response: {}", finalResponse);
+        log.info("<<< END logout request <<<");
+        return ResponseEntity.ok(finalResponse);
+    }
+
+    @PostMapping("/get-updates")
+    public ResponseEntity<ApiResponse<Void>> getUpdates(@Valid @RequestBody ApiRequest<GetUpdatesRequest> request) {
+        log.info(">>> START getUpdates >>>");
+        log.info("> request body: {}", request);
+
+        if (request.getData() == null) {
+            ApiResponse<Void> finalResponse = responseBuilder.buildFailureResponse(
+                    ServiceResult.failure("VALIDATION-001", "Request data cannot be null"), null, Locale.getDefault());
+            return ResponseEntity.badRequest().body(finalResponse);
+        }
+
+        ServiceResult<Void> serviceResult = gwIntegrationService.performGetUpdates(request.getData().sessionId());
+        ApiResponse<Void> finalResponse = serviceResult.isSuccess()
+                ? responseBuilder.buildSuccessResponse(null, null, Locale.getDefault())
+                : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
+
+        log.info("< Final response: {}", finalResponse);
+        log.info("<<< END getUpdates request <<<");
+        return ResponseEntity.ok(finalResponse);
+    }
+
+    @PostMapping("/send")
+    public ResponseEntity<ApiResponse<Void>> send(@Valid @RequestBody ApiRequest<SendRequest> request) {
+        log.info(">>> START send >>>");
+        log.info("> request body: {}", request);
+
+        if (request.getData() == null) {
+            ApiResponse<Void> finalResponse = responseBuilder.buildFailureResponse(
+                    ServiceResult.failure("VALIDATION-001", "Request data cannot be null"), null, Locale.getDefault());
+            return ResponseEntity.badRequest().body(finalResponse);
+        }
+
+        ServiceResult<Void> serviceResult = gwIntegrationService.performSend(request.getData());
+        ApiResponse<Void> finalResponse = serviceResult.isSuccess()
+                ? responseBuilder.buildSuccessResponse(null, null, Locale.getDefault())
+                : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
+
+        log.info("< Final response: {}", finalResponse);
+        log.info("<<< END send request <<<");
+        return ResponseEntity.ok(finalResponse);
+    }
+
+    @PostMapping("/send-ack-nak")
+    public ResponseEntity<ApiResponse<Void>> sendAckNak(@Valid @RequestBody ApiRequest<SendAckNakRequest> request) {
+        log.info(">>> START sendAckNak >>>");
+        log.info("> request body: {}", request);
+
+        if (request.getData() == null) {
+            ApiResponse<Void> finalResponse = responseBuilder.buildFailureResponse(
+                    ServiceResult.failure("VALIDATION-001", "Request data cannot be null"), null, Locale.getDefault());
+            return ResponseEntity.badRequest().body(finalResponse);
+        }
+
+        ServiceResult<Void> serviceResult = gwIntegrationService.performSendAckNak(request.getData().messageId(), request.getData().isAck());
+        ApiResponse<Void> finalResponse = serviceResult.isSuccess()
+                ? responseBuilder.buildSuccessResponse(null, null, Locale.getDefault())
+                : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
+
+        log.info("< Final response: {}", finalResponse);
+        log.info("<<< END sendAckNak request <<<");
+        return ResponseEntity.ok(finalResponse);
     }
 }
