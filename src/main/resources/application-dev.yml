@@ -1,5 +1,6 @@
-gwclient:
+stp:
   soap:
-    url: http://tmsxuat.bolnet.gov.la:7080/GWClientMUService/GWClientMU
-    username: SENDER22XXXX
-    password: your_password
+#    url: http://tmsxuat.bolnet.gov.la:7080/GWClientMUService/GWClientMU
+    url: http://172.16.2.8:7080/GWClientMUService/GWClientMU
+    username: LBBCLALABXXX
+    password: lbb@2026

@@ -43,7 +43,7 @@ public class GwIntegrationController {
      */
     @PostMapping("/logon")
     public ResponseEntity<?> logon(@Valid @RequestBody ApiRequest<LogonRequest> request) {
-        log.info(">> START logon");
+        log.info(">>> START logon >>>");
         log.info("> request body: {}", request);
         ApiResponse<LogonResponseDto> finalResponse = new ApiResponse<>();
         ServiceResult<LogonResponseDto> serviceResult = new ServiceResult<>();
@@ -92,7 +92,7 @@ public class GwIntegrationController {
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(finalResponse);
         } finally {
-            log.info("<< END logon request");
+            log.info("<<< END logon request <<<");
         }
     }
 }
