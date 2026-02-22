@@ -4,9 +4,12 @@ import com.noh.stpclient.exception.GatewayIntegrationException;
 import com.noh.stpclient.model.ServiceResult;
 import com.noh.stpclient.model.xml.LogonResponse;
 import com.noh.stpclient.model.xml.Send;
+import com.noh.stpclient.model.xml.SendResponse;
+import com.noh.stpclient.model.xml.SendResponseData;
 import com.noh.stpclient.remote.GWClientMuRemote;
 import com.noh.stpclient.web.dto.LogonResponseDto;
 import com.noh.stpclient.web.dto.SendRequest;
+import com.noh.stpclient.web.dto.SendResponseDto;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,7 +80,7 @@ public class GwIntegrationService {
         }
     }
 
-    public ServiceResult<Void> performSend(SendRequest request) {
+    public ServiceResult<SendResponseDto> performSend(SendRequest request) {
         Assert.notNull(request, "Send request cannot be null");
         Assert.hasText(request.sessionId(), "Session ID must not be empty");
         Assert.notNull(request.message(), "Message content cannot be null");
@@ -94,8 +97,18 @@ public class GwIntegrationService {
             soapMessage.setFormat(request.message().format());
             soapRequest.setMessage(soapMessage);
 
-            soapClient.send(soapRequest);
-            return ServiceResult.success(null);
+            SendResponse response = soapClient.send(soapRequest);
+            
+            if (response == null || response.getData() == null) {
+                return ServiceResult.failure("GW-002", "Received empty response from Gateway");
+            }
+            
+            SendResponseData data = response.getData();
+            if ("NAK".equals(data.getType())) {
+                return ServiceResult.failure(data.getCode(), data.getDescription());
+            }
+
+            return ServiceResult.success(SendResponseDto.from(data));
         } catch (GatewayIntegrationException e) {
             return ServiceResult.failure(e.getCode(), e.getDescription());
         } catch (Exception e) {

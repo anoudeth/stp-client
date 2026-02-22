@@ -11,6 +11,7 @@ import com.noh.stpclient.web.dto.LogonRequest;
 import com.noh.stpclient.web.dto.LogonResponseDto;
 import com.noh.stpclient.web.dto.LogoutRequest;
 import com.noh.stpclient.web.dto.SendRequest;
+import com.noh.stpclient.web.dto.SendResponseDto;
 import com.noh.stpclient.web.dto.SendAckNakRequest;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -96,19 +97,19 @@ public class GwIntegrationController {
     }
 
     @PostMapping("/send")
-    public ResponseEntity<ApiResponse<Void>> send(@Valid @RequestBody ApiRequest<SendRequest> request) {
+    public ResponseEntity<ApiResponse<SendResponseDto>> send(@Valid @RequestBody ApiRequest<SendRequest> request) {
         log.info(">>> START send >>>");
         log.info("> request body: {}", request);
 
         if (request.getData() == null) {
-            ApiResponse<Void> finalResponse = responseBuilder.buildFailureResponse(
+            ApiResponse<SendResponseDto> finalResponse = responseBuilder.buildFailureResponse(
                     ServiceResult.failure("VALIDATION-001", "Request data cannot be null"), null, Locale.getDefault());
             return ResponseEntity.badRequest().body(finalResponse);
         }
 
-        ServiceResult<Void> serviceResult = gwIntegrationService.performSend(request.getData());
-        ApiResponse<Void> finalResponse = serviceResult.isSuccess()
-                ? responseBuilder.buildSuccessResponse(null, null, Locale.getDefault())
+        ServiceResult<SendResponseDto> serviceResult = gwIntegrationService.performSend(request.getData());
+        ApiResponse<SendResponseDto> finalResponse = serviceResult.isSuccess()
+                ? responseBuilder.buildSuccessResponse(serviceResult.getData(), null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
 
         log.info("< Final response: {}", finalResponse);

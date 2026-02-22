@@ -6,6 +6,7 @@ import com.noh.stpclient.model.xml.LogonResponse;
 import com.noh.stpclient.model.xml.Logout;
 import com.noh.stpclient.model.xml.Send;
 import com.noh.stpclient.model.xml.SendAckNak;
+import com.noh.stpclient.model.xml.SendResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ws.client.core.support.WebServiceGatewaySupport;
 
@@ -40,9 +41,9 @@ public class GWClientMuRemote extends WebServiceGatewaySupport {
         getWebServiceTemplate().marshalSendAndReceive(request);
     }
 
-    public void send(Send request) {
+    public SendResponse send(Send request) {
         log.info("Initiating SOAP Send for session: {}", request.getSessionId());
-        getWebServiceTemplate().marshalSendAndReceive(request);
+        return (SendResponse) getWebServiceTemplate().marshalSendAndReceive(request);
     }
 
     public void sendAckNak(String messageId, boolean isAck) {
