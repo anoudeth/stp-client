@@ -3,6 +3,7 @@ package com.noh.stpclient.model.base;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,10 +18,11 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 public abstract class BaseRequest<T> {
 
-//    @NotBlank(message = "Request ID is required")
+    @NotBlank(message = "Request ID is required")
 //    @JsonProperty("requestId")
     private String requestId;
 
+    @NotBlank(message = "Request datetime is required")
     private String requestDt;
 
 //    @NotNull(message = "Request timestamp is required")
