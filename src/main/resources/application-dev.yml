@@ -4,3 +4,9 @@ stp:
     url: http://172.16.2.8:7080/GWClientMUService/GWClientMU
     username: LBBCLALABXXX
     password: lbb@2026
+
+ks:
+  type: PKCS12
+  pass: 2wsx@WSX
+  alias: te-c44b72d1-77d0-4664-bb5c-a61eaa6fe971
+  path: key/LBBCLALABXXX.pfx  # Relative to project root
