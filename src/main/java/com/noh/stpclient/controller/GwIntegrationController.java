@@ -107,11 +107,15 @@ public class GwIntegrationController {
             return ResponseEntity.badRequest().body(finalResponse);
         }
 
+        // get logon session ID
+
+        // performSend
         ServiceResult<SendResponseDto> serviceResult = gwIntegrationService.performSend(request.getData());
         ApiResponse<SendResponseDto> finalResponse = serviceResult.isSuccess()
                 ? responseBuilder.buildSuccessResponse(serviceResult.getData(), null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
 
+        // logout session ID
         log.info("< Final response: {}", finalResponse);
         log.info("<<< END send request <<<");
         return ResponseEntity.ok(finalResponse);

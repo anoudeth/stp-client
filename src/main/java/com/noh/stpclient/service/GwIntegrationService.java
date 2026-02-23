@@ -7,12 +7,16 @@ import com.noh.stpclient.model.xml.Send;
 import com.noh.stpclient.model.xml.SendResponse;
 import com.noh.stpclient.model.xml.SendResponseData;
 import com.noh.stpclient.remote.GWClientMuRemote;
+import com.noh.stpclient.service.crypto.CryptoManager;
 import com.noh.stpclient.web.dto.LogonResponseDto;
 import com.noh.stpclient.web.dto.SendRequest;
 import com.noh.stpclient.web.dto.SendResponseDto;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -24,11 +28,22 @@ import org.springframework.util.Assert;
 @Slf4j
 public class GwIntegrationService {
 
-    private static final Logger logger = LoggerFactory.getLogger(GwIntegrationService.class);
     private final GWClientMuRemote soapClient;
+    private final CryptoManager cryptoManager;
 
-    public GwIntegrationService(GWClientMuRemote soapClient) {
+    @Value("${stp.soap.username}")
+    private String stpUsername;
+    @Value("${stp.soap.password}")
+    private String stpPassword;
+
+    public GwIntegrationService(GWClientMuRemote soapClient,
+                                CryptoManager cryptoManager,
+                                @Value("${stp.soap.username}") String stpUsername,
+                                @Value("${stp.soap.password}") String stpPassword) {
         this.soapClient = soapClient;
+        this.cryptoManager = cryptoManager;
+        this.stpUsername = stpUsername;
+        this.stpPassword = stpPassword;
     }
 
     public ServiceResult<LogonResponseDto> performLogon(String username, String password) {
@@ -37,6 +52,9 @@ public class GwIntegrationService {
 
         try {
             log.debug("Attempting logon for user: {}", username);
+
+            // sign password
+
 
             final LogonResponse response = soapClient.logon(username, password);
 
