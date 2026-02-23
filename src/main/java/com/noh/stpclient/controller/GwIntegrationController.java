@@ -44,7 +44,7 @@ public class GwIntegrationController {
             return ResponseEntity.badRequest().body(finalResponse);
         }
 
-        ServiceResult<LogonResponseDto> serviceResult = gwIntegrationService.performLogon(request.getData().username(), request.getData().password());
+        ServiceResult<LogonResponseDto> serviceResult = gwIntegrationService.performLogon();
         ApiResponse<LogonResponseDto> finalResponse = serviceResult.isSuccess()
                 ? responseBuilder.buildSuccessResponse(serviceResult.getData(), null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
@@ -108,6 +108,7 @@ public class GwIntegrationController {
         }
 
         // get logon session ID
+        ServiceResult<LogonResponseDto> svRsLogon = gwIntegrationService.performLogon();
 
         // performSend
         ServiceResult<SendResponseDto> serviceResult = gwIntegrationService.performSend(request.getData());

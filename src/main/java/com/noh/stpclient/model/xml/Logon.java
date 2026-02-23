@@ -10,7 +10,8 @@ import lombok.Data;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
         "username",
-        "password"
+        "password",
+        "signature"
 })
 @XmlRootElement(name = "logon", namespace = "http://integration.gwclient.smallsystems.cma.se/")
 public class Logon {
@@ -20,5 +21,8 @@ public class Logon {
 
     @XmlElement(required = true)
     protected String password;
+
+    @XmlElement(required = true)
+    protected String signature;
 
 }

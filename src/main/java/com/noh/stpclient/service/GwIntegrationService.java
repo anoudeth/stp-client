@@ -7,15 +7,11 @@ import com.noh.stpclient.model.xml.Send;
 import com.noh.stpclient.model.xml.SendResponse;
 import com.noh.stpclient.model.xml.SendResponseData;
 import com.noh.stpclient.remote.GWClientMuRemote;
-import com.noh.stpclient.service.crypto.CryptoManager;
+import com.noh.stpclient.utils.CryptoManager;
 import com.noh.stpclient.web.dto.LogonResponseDto;
 import com.noh.stpclient.web.dto.SendRequest;
 import com.noh.stpclient.web.dto.SendResponseDto;
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -46,28 +42,28 @@ public class GwIntegrationService {
         this.stpPassword = stpPassword;
     }
 
-    public ServiceResult<LogonResponseDto> performLogon(String username, String password) {
-        Assert.hasText(username, "Username must not be empty");
-        Assert.hasText(password, "Password must not be empty");
+    public ServiceResult<LogonResponseDto> performLogon() {
 
         try {
-            log.debug("Attempting logon for user: {}", username);
-
             // sign password
+            String signedPassword = cryptoManager.signValue(this.stpPassword);
+            log.info("Signed Password: {}", signedPassword);
 
-
-            final LogonResponse response = soapClient.logon(username, password);
+            final LogonResponse response = soapClient.logon(this.stpUsername, this.stpPassword, signedPassword);
 
             if (response == null || response.getSessionId() == null) {
                 return ServiceResult.failure("GW-001", "Received empty session ID from Gateway");
             }
 
-            return ServiceResult.success(new LogonResponseDto(response.getSessionId()));
+            String sessionId = response.getSessionId();
+            log.info("Received Session ID: {}", sessionId);
+
+            return ServiceResult.success(new LogonResponseDto(sessionId));
         } catch (GatewayIntegrationException e) {
             log.error(e.getMessage());
             return ServiceResult.failure(e.getCode(), e.getInfo());
         } catch (Exception e) {
-            log.error("Logon failed for user: {}", username, e);
+            log.error("Logon failed for user: {}", this.stpUsername, e);
             return ServiceResult.failure("GW-999", "Gateway Logon Failed");
         }
     }

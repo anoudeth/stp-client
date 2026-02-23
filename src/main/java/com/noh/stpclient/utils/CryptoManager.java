@@ -1,4 +1,4 @@
-package com.noh.stpclient.service.crypto;
+package com.noh.stpclient.utils;
 
 import lombok.AllArgsConstructor;
 import org.bouncycastle.cms.CMSProcessableByteArray;
@@ -14,17 +14,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
-import java.util.Properties;
 
 @Service
-@AllArgsConstructor
 public class CryptoManager {
     private final JcaSignerInfoGeneratorBuilder builder;
     private final JcaContentSignerBuilder jcaContentSignerBuilder;
@@ -36,7 +33,7 @@ public class CryptoManager {
     private String ksType;
     @Value("${ks.pass}")
     private String ksPass;
-    @Value("${key.alias}")
+    @Value("${ks.alias}")
     private String keyAlias;
     @Value("${ks.path}")
     private String ksPath;

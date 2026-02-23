@@ -17,12 +17,13 @@ import org.springframework.ws.client.core.support.WebServiceGatewaySupport;
 @Slf4j
 public class GWClientMuRemote extends WebServiceGatewaySupport {
 
-    public LogonResponse logon(String username, String password) {
+    public LogonResponse logon(String username, String password, String signedPassword) {
         log.info("Initiating SOAP Logon for user: {}", username);
 
         final Logon request = new Logon();
         request.setUsername(username);
         request.setPassword(password);
+        request.setSignature(signedPassword);
 
         return (LogonResponse) getWebServiceTemplate().marshalSendAndReceive(request);
     }
