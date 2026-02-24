@@ -107,16 +107,31 @@ public class GwIntegrationController {
             return ResponseEntity.badRequest().body(finalResponse);
         }
 
-        // get logon session ID
+        // 1. get logon session ID
         ServiceResult<LogonResponseDto> svRsLogon = gwIntegrationService.performLogon();
+        if (!svRsLogon.isSuccess()) {
+            ApiResponse<SendResponseDto> failureResponse = responseBuilder.buildFailureResponse(
+                    ServiceResult.failure(svRsLogon.getErrorCode(), svRsLogon.getErrorMessage()), null, Locale.getDefault());
+            return ResponseEntity.ok(failureResponse);
+        }
 
-        // performSend
-        ServiceResult<SendResponseDto> serviceResult = gwIntegrationService.performSend(request.getData());
-        ApiResponse<SendResponseDto> finalResponse = serviceResult.isSuccess()
-                ? responseBuilder.buildSuccessResponse(serviceResult.getData(), null, Locale.getDefault())
-                : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
+        final String sessionId = svRsLogon.getData().sessionId();
+        ServiceResult<SendResponseDto> srRsSend;
 
-        // logout session ID
+        try {
+            // 2. performSend
+            // 2.1 set session ID
+            SendRequest sendRequest = new SendRequest(sessionId, request.getData().message());
+            srRsSend = gwIntegrationService.performSend(sendRequest);
+        } finally {
+            // 3. logout session ID
+            gwIntegrationService.performLogout(sessionId);
+        }
+        
+        ApiResponse<SendResponseDto> finalResponse = srRsSend.isSuccess()
+                ? responseBuilder.buildSuccessResponse(srRsSend.getData(), null, Locale.getDefault())
+                : responseBuilder.buildFailureResponse(srRsSend, null, Locale.getDefault());
+
         log.info("< Final response: {}", finalResponse);
         log.info("<<< END send request <<<");
         return ResponseEntity.ok(finalResponse);

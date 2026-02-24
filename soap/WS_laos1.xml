@@ -237,7 +237,7 @@
    <soapenv:Header/>
    <soapenv:Body>
       <int:getUpdates>
-         <session_id>JSESSIONID=D2B8D0778AE3C35388E7B8E912A31D2C</session_id>
+         <session_id>JSESSIONID=A1DAB02DE85F1CE8CB2EF91088842B93</session_id>
       </int:getUpdates>
    </soapenv:Body>
 </soapenv:Envelope>]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="http://integration.gwclient.smallsystems.cma.se/GWClientMU/getUpdatesRequest"/><con:wsrmConfig version="1.2"/></con:call></con:operation><con:operation isOneWay="false" action="" name="logon" bindingOperationName="logon" type="Request-Response" inputName="" receivesAttachments="false" sendsAttachments="false" anonymous="optional" id="b7b084b4-037b-419a-8c2b-b6107955d1c3"><con:settings/><con:call name="logon one way" id="ba44b94a-8bb9-4c4e-8cdf-7601add76dca" sslKeystore="MJBLLALABXXX.pfx"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://172.16.2.8:7080/GWClientMUService/GWClientMU?wsdl</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:int="http://integration.gwclient.smallsystems.cma.se/">
