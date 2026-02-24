@@ -1,0 +1,469 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:soapui-project name="gwclient_multipleusers" resourceRoot="${projectDir}" soapui-version="5.9.1" id="718f20d4-59e7-42ac-b48a-31da861508f8" activeEnvironment="Default" abortOnError="false" runType="SEQUENTIAL" xmlns:con="http://eviware.com/soapui/config"><con:settings/><con:interface xsi:type="con:WsdlInterface" wsaVersion="NONE" name="GWClientMUBinding" type="wsdl" bindingName="{http://integration.gwclient.smallsystems.cma.se/}GWClientMUBinding" soapVersion="1_1" anonymous="optional" definition="file:/C:/Projects/gwclient/development/gwclient_multipleusers_ws/service/src/main/resources/gwclient_multipleusers.wsdl" id="72673181-0668-4e44-be83-a7c3cd031397" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:settings/><con:definitionCache type="TEXT" rootPart="file:\C:\Projects\gwclient\development\gwclient_multipleusers_ws\service\src\main\resources\gwclient_multipleusers.wsdl"><con:part><con:url>file:\C:\Projects\gwclient\development\gwclient_multipleusers_ws\service\src\main\resources\gwclient_multipleusers.wsdl</con:url><con:content><![CDATA[<definitions name="GWClientMUService" targetNamespace="http://integration.gwclient.smallsystems.cma.se/" xmlns="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://integration.gwclient.smallsystems.cma.se/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/">
+  <types>
+    <xs:schema targetNamespace="http://integration.gwclient.smallsystems.cma.se/" version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:element name="logon" type="tns:logon_t"/>
+      <xs:element name="logonResponse" type="tns:session_t"/>
+      <xs:element name="logout" type="tns:session_t"/>
+      <xs:element name="logoutResponse" type="tns:empty_t"/>
+      <xs:element name="send" type="tns:send_t"/>
+      <xs:element name="sendResponse" type="tns:sendResponse"/>
+      <xs:element name="getUpdates" type="tns:session_t"/>
+      <xs:element name="getUpdatesResponse" type="tns:ParamsMtMsgArray"/>
+      <xs:element name="sendACKNAK" type="tns:sendACKNAK_t"/>
+      <xs:element name="sendACKNAKResponse" type="tns:empty_t"/>
+      <xs:element name="fault" type="tns:fault_t"/>
+      <xs:complexType name="logon_t">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="username" type="xs:string"/>
+          <xs:element minOccurs="1" maxOccurs="1" name="password" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="signature" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="clientWSUrl" type="xs:string"/>
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="session_t">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="session_id" type="xs:string"/>
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="send_t">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="session_id" type="xs:string"/>
+          <xs:element minOccurs="1" maxOccurs="1" name="message" type="tns:ParamsMtMsg"/>
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="sendACKNAK_t">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="session_id" type="xs:string"/>
+          <xs:element minOccurs="1" maxOccurs="1" name="data" type="tns:result_t"/>
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="ParamsMtMsg">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="block4" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="msgCopySrvId" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="msgCopySrvInfo" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="msgDelNotifRq" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="msgFinValidation" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="msgFormat" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="msgId" type="xs:long"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="msgMacResult" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="msgNetInputTime" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="msgNetMir" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="msgNetOutputDate" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="msgPacResult" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="msgPde" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="msgPdm" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="msgPriority" type="xs:string"/>
+          <xs:element minOccurs="1" maxOccurs="1" name="msgReceiver" type="xs:string"/>
+          <xs:element minOccurs="1" maxOccurs="1" name="msgSender" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="msgSequence" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="msgSession" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="msgSubFormat" type="xs:string"/>
+          <xs:element minOccurs="1" maxOccurs="1" name="msgType" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="msgUserPriority" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="msgUserReference" type="xs:string"/>
+          <xs:element minOccurs="1" maxOccurs="1" name="format" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="refMsgUserReference" type="xs:string"/>
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType final="#all" name="ParamsMtMsgArray">
+        <xs:sequence>
+          <xs:element maxOccurs="unbounded" minOccurs="0" name="item" nillable="true" type="tns:ParamsMtMsg"/>
+        </xs:sequence>
+      </xs:complexType>
+      <xs:simpleType name="ack_nak_type">
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="ACK"/>
+          <xs:enumeration value="NAK"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:complexType name="sendResponse">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="data" type="tns:result_t"/>
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="result_t">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="type" type="tns:ack_nak_type"/>
+          <xs:element minOccurs="1" maxOccurs="1" name="datetime" type="xs:string"/>
+          <xs:element minOccurs="1" maxOccurs="1" name="mir" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="ref" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="signature" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="code" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="description" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="info" type="xs:string"/>
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="empty_t"/>
+      <xs:complexType name="fault_t">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="code" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="description" type="xs:string"/>
+          <xs:element minOccurs="0" maxOccurs="1" name="info" type="xs:string"/>
+        </xs:sequence>
+      </xs:complexType>
+    </xs:schema>
+  </types>
+  <message name="GWClientMU_logon">
+    <part name="data" element="tns:logon"/>
+  </message>
+  <message name="GWClientMU_logonResponse">
+    <part name="data" element="tns:logonResponse"/>
+  </message>
+  <message name="GWClientMU_logout">
+    <part name="data" element="tns:logout"/>
+  </message>
+  <message name="GWClientMU_logoutResponse">
+    <part name="data" element="tns:logoutResponse"/>
+  </message>
+  <message name="GWClientMU_send">
+    <part name="data" element="tns:send"/>
+  </message>
+  <message name="GWClientMU_sendResponse">
+    <part name="data" element="tns:sendResponse"/>
+  </message>
+  <message name="GWClientMU_getUpdates">
+    <part name="data" element="tns:getUpdates"/>
+  </message>
+  <message name="GWClientMU_getUpdatesResponse">
+    <part name="data" element="tns:getUpdatesResponse"/>
+  </message>
+  <message name="GWClientMU_sendACKNAK">
+    <part name="data" element="tns:sendACKNAK"/>
+  </message>
+  <message name="GWClientMU_sendACKNAKResponse">
+    <part name="data" element="tns:sendACKNAKResponse"/>
+  </message>
+  <message name="gwClientFault">
+    <part name="data" element="tns:fault"/>
+  </message>
+  <portType name="GWClientMU">
+    <operation name="logon">
+      <input message="tns:GWClientMU_logon"/>
+      <output message="tns:GWClientMU_logonResponse"/>
+      <fault name="gwFault" message="tns:gwClientFault"/>
+    </operation>
+    <operation name="logout">
+      <input message="tns:GWClientMU_logout"/>
+      <output message="tns:GWClientMU_logoutResponse"/>
+      <fault name="gwFault" message="tns:gwClientFault"/>
+    </operation>
+    <operation name="send">
+      <input message="tns:GWClientMU_send"/>
+      <output message="tns:GWClientMU_sendResponse"/>
+      <fault name="gwFault" message="tns:gwClientFault"/>
+    </operation>
+    <operation name="getUpdates">
+      <input message="tns:GWClientMU_getUpdates"/>
+      <output message="tns:GWClientMU_getUpdatesResponse"/>
+      <fault name="gwFault" message="tns:gwClientFault"/>
+    </operation>
+    <operation name="sendACKNAK">
+      <input message="tns:GWClientMU_sendACKNAK"/>
+      <output message="tns:GWClientMU_sendACKNAKResponse"/>
+      <fault name="gwFault" message="tns:gwClientFault"/>
+    </operation>
+  </portType>
+  <binding name="GWClientMUBinding" type="tns:GWClientMU">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="logon">
+      <soap:operation soapAction=""/>
+      <input>
+        <soap:body use="literal"/>
+      </input>
+      <output>
+        <soap:body use="literal"/>
+      </output>
+      <fault name="gwFault">
+        <soap:fault name="gwFault" use="literal"/>
+      </fault>
+    </operation>
+    <operation name="logout">
+      <soap:operation soapAction=""/>
+      <input>
+        <soap:body use="literal"/>
+      </input>
+      <output>
+        <soap:body use="literal"/>
+      </output>
+      <fault name="gwFault">
+        <soap:fault name="gwFault" use="literal"/>
+      </fault>
+    </operation>
+    <operation name="send">
+      <soap:operation soapAction=""/>
+      <input>
+        <soap:body use="literal"/>
+      </input>
+      <output>
+        <soap:body use="literal"/>
+      </output>
+      <fault name="gwFault">
+        <soap:fault name="gwFault" use="literal"/>
+      </fault>
+    </operation>
+    <operation name="sendACKNAK">
+      <soap:operation soapAction=""/>
+      <input>
+        <soap:body use="literal"/>
+      </input>
+      <output>
+        <soap:body use="literal"/>
+      </output>
+      <fault name="gwFault">
+        <soap:fault name="gwFault" use="literal"/>
+      </fault>
+    </operation>
+    <operation name="getUpdates">
+      <soap:operation soapAction=""/>
+      <input>
+        <soap:body use="literal"/>
+      </input>
+      <output>
+        <soap:body use="literal"/>
+      </output>
+      <fault name="gwFault">
+        <soap:fault name="gwFault" use="literal"/>
+      </fault>
+    </operation>
+  </binding>
+  <service name="GWClientMUService">
+    <port name="GWClientMUPort" binding="tns:GWClientMUBinding">
+      <soap:address location="http://someserver/GWClientMUService/GWClientMU"/>
+    </port>
+  </service>
+</definitions>]]></con:content><con:type>http://schemas.xmlsoap.org/wsdl/</con:type></con:part></con:definitionCache><con:endpoints><con:endpoint>http://localhost:8080/GWClientMUService/GWClientMU?wsdl</con:endpoint></con:endpoints><con:operation isOneWay="false" action="" name="getUpdates" bindingOperationName="getUpdates" type="Request-Response" inputName="" receivesAttachments="false" sendsAttachments="false" anonymous="optional" id="f5e0ff07-36ad-47b4-ad42-043ba0ceb60e"><con:settings/><con:call name="getUpdates" id="d100d2ff-276a-43ad-a5f9-d76f9521e2b9"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://172.16.2.8:7080/GWClientMUService/GWClientMU?wsdl</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:int="http://integration.gwclient.smallsystems.cma.se/">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <int:getUpdates>
+         <session_id>JSESSIONID=D2B8D0778AE3C35388E7B8E912A31D2C</session_id>
+      </int:getUpdates>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="http://integration.gwclient.smallsystems.cma.se/GWClientMU/getUpdatesRequest"/><con:wsrmConfig version="1.2"/></con:call></con:operation><con:operation isOneWay="false" action="" name="logon" bindingOperationName="logon" type="Request-Response" inputName="" receivesAttachments="false" sendsAttachments="false" anonymous="optional" id="b7b084b4-037b-419a-8c2b-b6107955d1c3"><con:settings/><con:call name="logon one way" id="ba44b94a-8bb9-4c4e-8cdf-7601add76dca" sslKeystore="MJBLLALABXXX.pfx"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://172.16.2.8:7080/GWClientMUService/GWClientMU?wsdl</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:int="http://integration.gwclient.smallsystems.cma.se/">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <int:logon>
+         <username>LBBCLALABXXX</username>
+         <password>lbb@2026</password>
+         <signature>MIICegYJKoZIhvcNAQcCoIICazCCAmcCAQExDTALBglghkgBZQMEAgEwCwYJKoZIhvcNAQcBMYICRDCCAkACAQEwgYEwajESMBAGCgmSJomT8ixkARkWAmxhMRMwEQYKCZImiZPyLGQBGRYDZ292MRYwFAYKCZImiZPyLGQBGRYGYm9sbmV0MRYwFAYKCZImiZPyLGQBGRYGTlBTUFJPMQ8wDQYDVQQDEwZOUFMtQ0ECE2sAAAUXsbyTT6ka91oAAAAABRcwCwYJYIZIAWUDBAIBoIGWMBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTI2MDIyMzA5NTIyOFowKwYJKoZIhvcNAQk0MR4wHDALBglghkgBZQMEAgGhDQYJKoZIhvcNAQELBQAwLwYJKoZIhvcNAQkEMSIEIFnaG2P3HHLcAsSBTGaX7gxgtczm87Ybl/TSJ+chkd9mMA0GCSqGSIb3DQEBCwUABIIBAIXP0oX+oVkTYQmmkSdbhYWaOK9RFlQ1SrUBdSCI1tREnYodpKe1MLbh8JeTGzXHE7P/E+yLeDRwZPmXzgipAxoiZqCiLFphTC8dGoH8PZza+s7zOgf/vJl5dXX7hO4guaUY8VyFFjBqeXBuhWT1mmfJJV7/y7dSCO8DjlwH2Hr2arR+HNnekAYE6TtG8nMHE+2Rxf5w87nx/axKAyg0m3RJWGbGPzfjx0G67m7MPhM0QPts3vtASVesu91tTk1QLCwAIuMaX4QwaWCcF3DqUMnT39lPjNSHv9RXMMiz9l1m8/3And26fXtZXu+is2RIiWsj9qrJ9sQ3djnhMLZE3g4=
+</signature>
+      </int:logon>
+   </soapenv:Body>
+</soapenv:Envelope>
+
+]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="http://integration.gwclient.smallsystems.cma.se/GWClientMU/logonRequest"/><con:wsrmConfig version="1.2"/></con:call><con:call id="b5c8762a-a0e0-4ddb-a662-d68bfe8d3f84" name="logon two ways"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://172.16.2.8:7080/GWClientMUService/GWClientMU?wsdl</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:int="http://integration.gwclient.smallsystems.cma.se/">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <int:logon>
+         <username>LBBCLALABXXX</username>
+         <password>lbb@2026</password>
+         <signature></signature>
+         <!--Optional:-->
+         <clientWSUrl></clientWSUrl>
+      </int:logon>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="http://integration.gwclient.smallsystems.cma.se/GWClientMU/logonRequest"/><con:wsrmConfig version="1.2"/></con:call></con:operation><con:operation isOneWay="false" action="" name="logout" bindingOperationName="logout" type="Request-Response" inputName="" receivesAttachments="false" sendsAttachments="false" anonymous="optional" id="4f31a219-fed5-424b-a758-ff5322643c84"><con:settings/><con:call name="logout" id="4513c29d-52d8-40fa-bffb-c316cca10d0c"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://172.16.2.8:7080/GWClientMUService/GWClientMU?wsdl</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:int="http://integration.gwclient.smallsystems.cma.se/">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <int:logout>
+         <session_id>JSESSIONID=D4A3923FB25BBA0272280D002D4B0F94</session_id>
+      </int:logout>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="http://integration.gwclient.smallsystems.cma.se/GWClientMU/logoutRequest"/><con:wsrmConfig version="1.2"/></con:call></con:operation><con:operation isOneWay="false" action="" name="send" bindingOperationName="send" type="Request-Response" inputName="" receivesAttachments="false" sendsAttachments="false" anonymous="optional" id="d260fdfb-8d77-4dc2-af85-01e64695e067"><con:settings/><con:call name="send" id="0d72d645-c759-4f17-8e76-c2f9748db755"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://172.16.2.8:7080/GWClientMUService/GWClientMU?wsdl</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:int="http://integration.gwclient.smallsystems.cma.se/">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <int:send>
+         <session_id>JSESSIONID=B70D529AADB7FDE73821A70C51F8D57C</session_id>
+         <message>
+           <block4>
+<![CDATA[<DataPDU xmlns="urn:cma:stp:xsd:stp.1.0">  
+  <Body> 
+    <AppHdr xmlns="urn:iso:std:iso:20022:tech:xsd:head.001.001.01" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">  
+      <Fr> 
+        <FIId> 
+          <FinInstnId> 
+            <BICFI>LPDRLALAXATM</BICFI> 
+          </FinInstnId> 
+        </FIId> 
+      </Fr>  
+      <To> 
+        <FIId> 
+          <FinInstnId> 
+            <BICFI>LPDRLALA</BICFI> 
+          </FinInstnId> 
+        </FIId> 
+      </To>  
+      <BizMsgIdr>BIZ-18063044239483413</BizMsgIdr>  
+      <MsgDefIdr>pacs.008.001.08</MsgDefIdr>  
+      <BizSvc>RTGS</BizSvc>  
+      <CreDt>2019-12-16T10:01:58.202Z</CreDt> 
+    </AppHdr>  
+    <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">  
+      <FIToFICstmrCdtTrf> 
+        <GrpHdr> 
+          <MsgId>1000045056</MsgId>  
+          <CreDtTm>2019-12-16T10:00:20</CreDtTm>  
+          <NbOfTxs>1</NbOfTxs>  
+          <SttlmInf> 
+            <SttlmMtd>CLRG</SttlmMtd> 
+          </SttlmInf> 
+        </GrpHdr>  
+        <CdtTrfTxInf> 
+          <PmtId> 
+            <InstrId>1000045056</InstrId>  
+            <EndToEndId>NOTPROVIDED</EndToEndId>  
+            <TxId>1000045056</TxId> 
+          </PmtId>  
+          <PmtTpInf> 
+            <ClrChanl>RTGS</ClrChanl>  
+            <SvcLvl> 
+              <Prtry>0010</Prtry> 
+            </SvcLvl>  
+            <LclInstrm> 
+              <Prtry>RTGS-SSCT</Prtry> 
+            </LclInstrm>  
+            <CtgyPurp> 
+              <Prtry>001</Prtry> 
+            </CtgyPurp> 
+          </PmtTpInf>  
+          <IntrBkSttlmAmt Ccy="LAK">20615.</IntrBkSttlmAmt>  
+          <IntrBkSttlmDt>2025-01-03</IntrBkSttlmDt>  
+          <ChrgBr>SHAR</ChrgBr>  
+          <InstgAgt> 
+            <FinInstnId> 
+              <BICFI>LPDRLALAXATM</BICFI> 
+            </FinInstnId> 
+          </InstgAgt>  
+          <InstdAgt> 
+            <FinInstnId> 
+              <BICFI>LPDRLALA</BICFI> 
+            </FinInstnId> 
+          </InstdAgt>  
+          <Dbtr> 
+            <Nm>LDB Shares trading</Nm>  
+            <PstlAdr/> 
+          </Dbtr>  
+          <DbtrAcct> 
+            <Id> 
+              <Othr> 
+                <Id>0000000000340507</Id> 
+              </Othr> 
+            </Id> 
+          </DbtrAcct>  
+          <DbtrAgt> 
+            <FinInstnId> 
+              <BICFI>LDBBLALA</BICFI> 
+            </FinInstnId> 
+          </DbtrAgt>  
+          <DbtrAgtAcct> 
+            <Id> 
+              <Othr> 
+                <Id>0000000000340507</Id> 
+              </Othr> 
+            </Id> 
+          </DbtrAgtAcct>  
+          <CdtrAgt> 
+            <FinInstnId> 
+              <BICFI>LPDRLALA</BICFI> 
+            </FinInstnId> 
+          </CdtrAgt>  
+          <CdtrAgtAcct> 
+            <Id> 
+              <Othr> 
+                <Id>0000000094850501</Id> 
+              </Othr> 
+            </Id> 
+          </CdtrAgtAcct>  
+          <Cdtr> 
+            <Nm>Shares trading SECO Fee</Nm>  
+            <PstlAdr/> 
+          </Cdtr>  
+          <CdtrAcct> 
+            <Id> 
+              <Othr> 
+                <Id>0000000129450101</Id> 
+              </Othr> 
+            </Id> 
+          </CdtrAcct>  
+          <InstrForNxtAgt> 
+            <InstrInf>/BNF/</InstrInf> 
+          </InstrForNxtAgt>  
+          <RmtInf> 
+            <Ustrd>/INFO</Ustrd> 
+          </RmtInf> 
+        </CdtTrfTxInf> 
+      </FIToFICstmrCdtTrf> 
+    </Document> 
+  </Body> 
+</DataPDU>
+]]]]>><![CDATA[
+        </block4>
+            <!--Optional:-->
+            <msgCopySrvId></msgCopySrvId>
+            <!--Optional:-->
+            <msgCopySrvInfo></msgCopySrvInfo>
+            <!--Optional:-->
+            <msgDelNotifRq></msgDelNotifRq>
+            <!--Optional:-->
+            <msgFinValidation></msgFinValidation>
+            <!--Optional:-->
+            <msgFormat></msgFormat>
+            <!--Optional:-->
+            <msgMacResult></msgMacResult>
+            <!--Optional:-->
+            <msgNetInputTime></msgNetInputTime>
+            <!--Optional:-->
+            <msgNetMir></msgNetMir>
+            <!--Optional:-->
+            <msgNetOutputDate></msgNetOutputDate>
+            <!--Optional:-->
+            <msgPacResult></msgPacResult>
+            <!--Optional:-->
+            <msgPde></msgPde>
+            <!--Optional:-->
+            <msgPdm></msgPdm>
+            <!--Optional:-->
+            <msgPriority></msgPriority>
+            <msgReceiver>LPDRLALAXATS</msgReceiver>
+            <msgSender>LPDRLALAAATM</msgSender>
+            <!--Optional:-->
+            <msgSequence>123</msgSequence>
+            <!--Optional:-->
+            <msgSession></msgSession>
+            <!--Optional:-->
+            <msgSubFormat></msgSubFormat>
+            <msgType>pacs.008.001.08</msgType>
+            <!--Optional:-->
+            <msgUserPriority></msgUserPriority>
+            <!--Optional:-->
+            <msgUserReference></msgUserReference>
+            <format>MX</format>
+            <!--Optional:-->
+            <refMsgUserReference></refMsgUserReference>
+         </message>
+      </int:send>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="http://integration.gwclient.smallsystems.cma.se/GWClientMU/sendRequest"/><con:wsrmConfig version="1.2"/></con:call></con:operation><con:operation isOneWay="false" action="" name="sendACKNAK" bindingOperationName="sendACKNAK" type="Request-Response" inputName="" receivesAttachments="false" sendsAttachments="false" anonymous="optional" id="bc2c196c-940f-4a26-bd37-69c5790eac48"><con:settings/><con:call name="sendACKNAK" id="82c7a872-7519-48a6-9f34-3c9799de588f"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://172.16.2.8:7080/GWClientMUService/GWClientMU?wsdl</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:int="http://integration.gwclient.smallsystems.cma.se/">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <int:sendACKNAK>
+         <session_id>JSESSIONID=D2B8D0778AE3C35388E7B8E912A31D2C</session_id>
+         <data>
+           <type>ACK</type>
+            <datetime>2412181444</datetime>
+            <mir>241218LPDRLALAAATS0001005116</mir>
+            <ref>D000000000129086</ref>
+
+            <!--Optional:-->
+            <signature>?</signature>
+            <!--Optional:-->
+            <code>?</code>
+            <!--Optional:-->
+            <description>?</description>
+            <!--Optional:-->
+            <info>?</info>
+         </data>
+      </int:sendACKNAK>
+   </soapenv:Body>
+</soapenv:Envelope>]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="http://integration.gwclient.smallsystems.cma.se/GWClientMU/sendACKNAKRequest"/><con:wsrmConfig version="1.2"/></con:call></con:operation></con:interface><con:properties/><con:wssContainer><con:crypto><con:source>../key/LBBCLALABXXX.pfx</con:source><con:password>2wsx@WSX</con:password><con:type>KEYSTORE</con:type></con:crypto></con:wssContainer><con:oAuth2ProfileContainer/><con:databaseConnectionContainer/><con:oAuth1ProfileContainer/><con:reporting><con:xmlTemplates/><con:parameters/></con:reporting><con:sensitiveInformation/></con:soapui-project>
