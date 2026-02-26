@@ -2,12 +2,14 @@ package com.noh.stpclient.service;
 
 import com.noh.stpclient.exception.GatewayIntegrationException;
 import com.noh.stpclient.model.ServiceResult;
+import com.noh.stpclient.model.xml.DataPDU;
 import com.noh.stpclient.model.xml.LogonResponse;
 import com.noh.stpclient.model.xml.Send;
 import com.noh.stpclient.model.xml.SendResponse;
 import com.noh.stpclient.model.xml.SendResponseData;
 import com.noh.stpclient.remote.GWClientMuRemote;
 import com.noh.stpclient.utils.CryptoManager;
+import com.noh.stpclient.web.dto.FinancialTransactionRequest;
 import com.noh.stpclient.web.dto.LogonResponseDto;
 import com.noh.stpclient.web.dto.SendRequest;
 import com.noh.stpclient.web.dto.SendResponseDto;
@@ -15,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
+
+import jakarta.xml.bind.JAXBException;
 
 /**
  * Service layer for Gateway Integration.
@@ -26,6 +30,7 @@ public class GwIntegrationService {
 
     private final GWClientMuRemote soapClient;
     private final CryptoManager cryptoManager;
+    private final DataPDUTransformer dataPDUTransformer;
 
     @Value("${stp.soap.username}")
     private String stpUsername;
@@ -34,10 +39,12 @@ public class GwIntegrationService {
 
     public GwIntegrationService(GWClientMuRemote soapClient,
                                 CryptoManager cryptoManager,
+                                DataPDUTransformer dataPDUTransformer,
                                 @Value("${stp.soap.username}") String stpUsername,
                                 @Value("${stp.soap.password}") String stpPassword) {
         this.soapClient = soapClient;
         this.cryptoManager = cryptoManager;
+        this.dataPDUTransformer = dataPDUTransformer;
         this.stpUsername = stpUsername;
         this.stpPassword = stpPassword;
     }
@@ -141,6 +148,55 @@ public class GwIntegrationService {
         } catch (Exception e) {
             log.error("SendAckNak failed for message: {}", messageId, e);
             return ServiceResult.failure("GW-999", "Gateway SendAckNak Failed");
+        }
+    }
+
+    public ServiceResult<String> performFinancialTransaction(FinancialTransactionRequest request) {
+        Assert.notNull(request, "Financial transaction request cannot be null");
+        Assert.hasText(request.sessionId(), "Session ID must not be empty");
+        Assert.notNull(request.transaction(), "Transaction data cannot be null");
+
+        try {
+            // Transform transaction data to DataPDU format
+            DataPDU dataPDU = dataPDUTransformer.transformToDataPDU(request);
+            
+            // Marshal DataPDU to XML string
+            String xmlContent = dataPDUTransformer.marshalToXml(dataPDU);
+            
+            log.info("Generated XML for financial transaction: {}", xmlContent);
+            
+            // Create Send request with the XML content
+            Send soapRequest = new Send();
+            soapRequest.setSessionId(request.sessionId());
+            Send.Message soapMessage = new Send.Message();
+            soapMessage.setBlock4(xmlContent);
+            soapMessage.setMsgReceiver("RTGS");
+            soapMessage.setMsgSender("RTGS");
+            soapMessage.setMsgType("pacs.008.001.08");
+            soapMessage.setMsgUserReference(request.transaction().messageId());
+            soapMessage.setFormat("XML");
+            soapRequest.setMessage(soapMessage);
+
+            SendResponse response = soapClient.send(soapRequest);
+            
+            if (response == null || response.getData() == null) {
+                return ServiceResult.failure("GW-002", "Received empty response from Gateway");
+            }
+            
+            SendResponseData data = response.getData();
+            if ("NAK".equals(data.getType())) {
+                return ServiceResult.failure(data.getCode(), data.getDescription());
+            }
+
+            return ServiceResult.success(xmlContent);
+        } catch (JAXBException e) {
+            log.error("XML marshaling failed for financial transaction", e);
+            return ServiceResult.failure("GW-003", "XML transformation failed: " + e.getMessage());
+        } catch (GatewayIntegrationException e) {
+            return ServiceResult.failure(e.getCode(), e.getDescription());
+        } catch (Exception e) {
+            log.error("Financial transaction failed for session: {}", request.sessionId(), e);
+            return ServiceResult.failure("GW-999", "Financial transaction failed");
         }
     }
 }
