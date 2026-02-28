@@ -1,6 +1,8 @@
 package com.noh.stpclient.example;
 
+import com.noh.stpclient.service.DataPDUTransformer;
 import com.noh.stpclient.web.dto.FinancialTransactionRequest;
+import jakarta.xml.bind.JAXBException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
@@ -75,8 +77,15 @@ public class FinancialTransactionExample {
      * 
      * Response will contain the generated XML in the data field if successful.
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws JAXBException {
         FinancialTransactionRequest request = createSampleRequest();
         log.info("Sample financial transaction request created: {}", request);
+        DataPDUTransformer transformer = new DataPDUTransformer();
+        var dataPDU = transformer.transformToDataPDU(request);
+        log.info("Transformed DataPDU: {}", dataPDU);
+
+        // transform to xml
+        var xml = transformer.marshalToXml(dataPDU);
+        log.info("Generated XML: {}", xml);
     }
 }

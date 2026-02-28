@@ -7,6 +7,8 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "DataPDU", namespace = "urn:cma:stp:xsd:stp.1.0")
