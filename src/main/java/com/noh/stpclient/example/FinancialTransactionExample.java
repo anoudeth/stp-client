@@ -1,9 +1,25 @@
 package com.noh.stpclient.example;
 
+import com.noh.stpclient.model.xml.DataPDU;
+import com.noh.stpclient.model.xml.Send;
 import com.noh.stpclient.service.DataPDUTransformer;
+import com.noh.stpclient.utils.CryptoManager;
 import com.noh.stpclient.web.dto.FinancialTransactionRequest;
-import jakarta.xml.bind.JAXBException;
+import com.noh.stpclient.web.dto.SendRequest;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.Marshaller;
 import lombok.extern.slf4j.Slf4j;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.StringWriter;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -20,13 +36,13 @@ public class FinancialTransactionExample {
     public static FinancialTransactionRequest createSampleRequest() {
         var transaction = new FinancialTransactionRequest.TransactionData(
             "2605501332860000",                    // messageId
-            "1",                                   // msgSequence
+            "123",                                   // msgSequence
             "2605501332860000",                    // businessMessageId
-            "IDCBLALA",                            // senderBic
-            "LPDRLALA",                            // receiverBic
-            "IDCBLALA",                            // instructingAgentBic
+            "LBBCLALABXXX",                            // senderBic
+            "LPDRLALAXATS",                            // receiverBic   // BOL
+            "LBBCLALABXXX",                            // instructingAgentBic
             "COEBLALAXXX",                         // instructedAgentBic
-            "IDCBLALA",                            // debtorAgentBic
+            "LBBCLALABXXX",                            // debtorAgentBic
             "USD",                                 // currency
             new BigDecimal("64000"),               // amount
             "2026-02-25",                          // settlementDate
@@ -42,7 +58,7 @@ public class FinancialTransactionExample {
         );
 
         return new FinancialTransactionRequest(
-            "sample-session-id", // This will be replaced by actual session ID
+            "JSESSIONID=xxxxxx", // This will be replaced by actual session ID
             transaction
         );
     }
@@ -82,15 +98,81 @@ public class FinancialTransactionExample {
      * 
      * Response will contain the generated XML in the data field if successful.
      */
-    public static void main(String[] args) throws JAXBException {
+    public static void main(String[] args) throws Exception {
         FinancialTransactionRequest request = createSampleRequest();
         log.info("Sample financial transaction request created: {}", request);
+
         DataPDUTransformer transformer = new DataPDUTransformer();
         var dataPDU = transformer.transformToDataPDU(request);
         log.info("Transformed DataPDU: {}", dataPDU);
 
         // transform to xml
         var xml = transformer.marshalToXml(dataPDU);
-        log.info("Generated XML: {}", xml);
+        log.info("Generated XML:\n{}", xml);
+
+        // sign the xml
+        CryptoManager cryptoManager = new CryptoManager();
+        setField(cryptoManager, "ksPath", "key/LBBCLALABXXX.pfx");
+        setField(cryptoManager, "ksType", "PKCS12");
+        setField(cryptoManager, "ksPass", "2wsx@WSX");
+        setField(cryptoManager, "keyAlias", "te-c44b72d1-77d0-4664-bb5c-a61eaa6fe971");
+        var signedXml = cryptoManager.signXml(xml);
+        log.info("Signed XML:\n{}", signedXml);
+
+        // build SendRequest with signed XML as block4
+        var sendRequest = new SendRequest(
+            request.sessionId(),
+            new SendRequest.MessageContent(
+                signedXml,
+                request.transaction().receiverBic(),
+                request.transaction().senderBic(),
+                "pacs.008.001.08",
+                request.transaction().msgSequence(),
+                "MX"
+            )
+        );
+        log.info("SendRequest: {}", sendRequest);
+
+        // map SendRequest -> Send (SOAP model) and marshal to XML
+        Send send = new Send();
+        send.setSessionId(sendRequest.sessionId());
+        Send.Message msg = new Send.Message();
+        msg.setBlock4(sendRequest.message().block4());
+        msg.setMsgReceiver(sendRequest.message().msgReceiver());
+        msg.setMsgSender(sendRequest.message().msgSender());
+        msg.setMsgSequence(sendRequest.message().msgSequence());
+        msg.setMsgType(sendRequest.message().msgType());
+        msg.setFormat(sendRequest.message().format());
+        send.setMessage(msg);
+
+        // Marshal Send -> DOM, then wrap block4 content in CDATA
+        JAXBContext ctx = JAXBContext.newInstance(Send.class);
+        Marshaller marshaller = ctx.createMarshaller();
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        dbf.setNamespaceAware(true);
+        Document doc = dbf.newDocumentBuilder().newDocument();
+        marshaller.marshal(send, doc);
+
+        NodeList block4Nodes = doc.getElementsByTagName("block4");
+        if (block4Nodes.getLength() > 0) {
+            Element block4Elem = (Element) block4Nodes.item(0);
+            String content = block4Elem.getTextContent();
+            while (block4Elem.hasChildNodes()) {
+                block4Elem.removeChild(block4Elem.getFirstChild());
+            }
+            block4Elem.appendChild(doc.createCDATASection(content));
+        }
+
+        Transformer tf = TransformerFactory.newInstance().newTransformer();
+        tf.setOutputProperty(OutputKeys.INDENT, "yes");
+        StringWriter sw = new StringWriter();
+        tf.transform(new DOMSource(doc), new StreamResult(sw));
+        log.info("Send XML:\n{}", sw);
+    }
+
+    private static void setField(Object obj, String fieldName, String value) throws Exception {
+        var field = obj.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.set(obj, value);
     }
 }

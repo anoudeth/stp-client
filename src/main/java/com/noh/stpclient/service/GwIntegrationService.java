@@ -162,14 +162,17 @@ public class GwIntegrationService {
             
             // Marshal DataPDU to XML string
             String xmlContent = dataPDUTransformer.marshalToXml(dataPDU);
-            
-            log.info("Generated XML for financial transaction: {}", xmlContent);
-            
+
+            // Sign the <Document> element and embed <ds:Signature> inside <AppHdr/Sgntr>
+            String signedXmlContent = cryptoManager.signXml(xmlContent);
+
+            log.info("Generated signed XML for financial transaction: {}", signedXmlContent);
+
             // Create Send request with the XML content
             Send soapRequest = new Send();
             soapRequest.setSessionId(request.sessionId());
             Send.Message soapMessage = new Send.Message();
-            soapMessage.setBlock4(xmlContent);
+            soapMessage.setBlock4(signedXmlContent);
             soapMessage.setMsgReceiver(request.transaction().receiverBic());
             soapMessage.setMsgSender(request.transaction().senderBic());
             soapMessage.setMsgType("pacs.008.001.08");
@@ -188,7 +191,7 @@ public class GwIntegrationService {
                 return ServiceResult.failure(data.getCode(), data.getDescription());
             }
 
-            return ServiceResult.success(xmlContent);
+            return ServiceResult.success(signedXmlContent);
         } catch (JAXBException e) {
             log.error("XML marshaling failed for financial transaction", e);
             return ServiceResult.failure("GW-003", "XML transformation failed: " + e.getMessage());

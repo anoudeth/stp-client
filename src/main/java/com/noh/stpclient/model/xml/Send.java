@@ -1,9 +1,6 @@
 package com.noh.stpclient.model.xml;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.*;
 import lombok.Data;
 
 @Data
@@ -19,6 +16,14 @@ public class Send {
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
+    @XmlType(name = "", propOrder = {
+            "block4",
+            "msgReceiver",
+            "msgSender",
+            "msgSequence",
+            "msgType",
+            "format"
+    })
     public static class Message {
         @XmlElement(required = true)
         private String block4;
