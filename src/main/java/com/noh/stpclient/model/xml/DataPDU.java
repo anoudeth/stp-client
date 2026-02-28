@@ -177,7 +177,7 @@ public class DataPDU {
         private CdtrAcct cdtrAcct;
         
         @XmlElement(name = "InstrForNxtAgt")
-        private String instrForNxtAgt;
+        private InstrForNxtAgt instrForNxtAgt;
         
         @XmlElement(name = "RmtInf")
         private RmtInf rmtInf;
@@ -326,12 +326,20 @@ public class DataPDU {
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class Cdtr {
-        
+
         @XmlElement(name = "Nm")
         private String nm;
-        
+
         @XmlElement(name = "PstlAdr")
-        private String pstlAdr;
+        private PstlAdr pstlAdr;
+    }
+
+    @Data
+    @XmlAccessorType(XmlAccessType.FIELD)
+    public static class InstrForNxtAgt {
+
+        @XmlElement(name = "InstrInf")
+        private String instrInf;
     }
 
     @Data

@@ -160,11 +160,11 @@ public class DataPDUTransformer {
         // Debtor
         DataPDU.Dbtr dbtr = new DataPDU.Dbtr();
         dbtr.setNm(transaction.debtorName());
+        DataPDU.PstlAdr dbtrPstlAdr = new DataPDU.PstlAdr();
         if (transaction.debtorAddressLines() != null && !transaction.debtorAddressLines().isEmpty()) {
-            DataPDU.PstlAdr pstlAdr = new DataPDU.PstlAdr();
-            pstlAdr.setAdrLine(transaction.debtorAddressLines());
-            dbtr.setPstlAdr(pstlAdr);
+            dbtrPstlAdr.setAdrLine(transaction.debtorAddressLines());
         }
+        dbtr.setPstlAdr(dbtrPstlAdr);
         cdtTrfTxInf.setDbtr(dbtr);
         
         // Debtor Account
@@ -179,7 +179,7 @@ public class DataPDUTransformer {
         // Debtor Agent
         DataPDU.DbtrAgt dbtrAgt = new DataPDU.DbtrAgt();
         DataPDU.FinInstnId dbtrFinInstnId = new DataPDU.FinInstnId();
-        dbtrFinInstnId.setBicfi(transaction.senderBic());
+        dbtrFinInstnId.setBicfi(transaction.debtorAgentBic());
         dbtrAgt.setFinInstnId(dbtrFinInstnId);
         cdtTrfTxInf.setDbtrAgt(dbtrAgt);
         
@@ -211,7 +211,7 @@ public class DataPDUTransformer {
         // Creditor
         DataPDU.Cdtr cdtr = new DataPDU.Cdtr();
         cdtr.setNm(transaction.creditorName());
-        cdtr.setPstlAdr(""); // Empty postal address as per example
+        cdtr.setPstlAdr(new DataPDU.PstlAdr());
         cdtTrfTxInf.setCdtr(cdtr);
         
         // Creditor Account
@@ -223,8 +223,13 @@ public class DataPDUTransformer {
         cdtrAcct.setId(cdtrId);
         cdtTrfTxInf.setCdtrAcct(cdtrAcct);
         
-        cdtTrfTxInf.setInstrForNxtAgt(""); // Empty as per example
-        
+        // Instruction for Next Agent
+        if (transaction.instrForNxtAgt() != null) {
+            DataPDU.InstrForNxtAgt instr = new DataPDU.InstrForNxtAgt();
+            instr.setInstrInf(transaction.instrForNxtAgt());
+            cdtTrfTxInf.setInstrForNxtAgt(instr);
+        }
+
         // Remittance Information
         DataPDU.RmtInf rmtInf = new DataPDU.RmtInf();
         rmtInf.setUstrd(transaction.remittanceInformation());

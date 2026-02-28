@@ -114,7 +114,7 @@ public class GwIntegrationService {
             soapMessage.setMsgReceiver(request.message().msgReceiver());
             soapMessage.setMsgSender(request.message().msgSender());
             soapMessage.setMsgType(request.message().msgType());
-            soapMessage.setMsgUserReference(request.message().msgUserReference());
+            soapMessage.setMsgSequence(request.message().msgSequence());
             soapMessage.setFormat(request.message().format());
             soapRequest.setMessage(soapMessage);
 
@@ -170,11 +170,11 @@ public class GwIntegrationService {
             soapRequest.setSessionId(request.sessionId());
             Send.Message soapMessage = new Send.Message();
             soapMessage.setBlock4(xmlContent);
-            soapMessage.setMsgReceiver("RTGS");
-            soapMessage.setMsgSender("RTGS");
+            soapMessage.setMsgReceiver(request.transaction().receiverBic());
+            soapMessage.setMsgSender(request.transaction().senderBic());
             soapMessage.setMsgType("pacs.008.001.08");
-            soapMessage.setMsgUserReference(request.transaction().messageId());
-            soapMessage.setFormat("XML");
+            soapMessage.setMsgSequence(request.transaction().msgSequence());
+            soapMessage.setFormat("MX");
             soapRequest.setMessage(soapMessage);
 
             SendResponse response = soapClient.send(soapRequest);

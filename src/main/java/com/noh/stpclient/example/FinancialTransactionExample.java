@@ -20,11 +20,13 @@ public class FinancialTransactionExample {
     public static FinancialTransactionRequest createSampleRequest() {
         var transaction = new FinancialTransactionRequest.TransactionData(
             "2605501332860000",                    // messageId
+            "1",                                   // msgSequence
             "2605501332860000",                    // businessMessageId
             "IDCBLALA",                            // senderBic
             "LPDRLALA",                            // receiverBic
             "IDCBLALA",                            // instructingAgentBic
             "COEBLALAXXX",                         // instructedAgentBic
+            "IDCBLALA",                            // debtorAgentBic
             "USD",                                 // currency
             new BigDecimal("64000"),               // amount
             "2026-02-25",                          // settlementDate
@@ -35,6 +37,7 @@ public class FinancialTransactionExample {
             "0961227683628",                       // creditorAccount
             "0000010000200510",                    // creditorAgentAccount
             List.of(" PHOXAY", " ", " PHOXAY", " "), // debtorAddressLines
+            "/BNF/",                               // instrForNxtAgt
             "PURCHASE FOR GOODS"                   // remittanceInformation
         );
 
@@ -50,14 +53,15 @@ public class FinancialTransactionExample {
      * Request body format:
      * {
      *   "data": {
-     *     "sessionId": "your-session-id",
      *     "transaction": {
      *       "messageId": "2605501332860000",
+     *       "msgSequence": "1",
      *       "businessMessageId": "2605501332860000",
      *       "senderBic": "IDCBLALA",
      *       "receiverBic": "LPDRLALA",
      *       "instructingAgentBic": "IDCBLALA",
      *       "instructedAgentBic": "COEBLALAXXX",
+     *       "debtorAgentBic": "IDCBLALA",
      *       "currency": "USD",
      *       "amount": 64000,
      *       "settlementDate": "2026-02-25",
@@ -68,6 +72,7 @@ public class FinancialTransactionExample {
      *       "creditorAccount": "0961227683628",
      *       "creditorAgentAccount": "0000010000200510",
      *       "debtorAddressLines": [" PHOXAY", " ", " PHOXAY", " "],
+     *       "instrForNxtAgt": "/BNF/",
      *       "remittanceInformation": "PURCHASE FOR GOODS"
      *     }
      *   }

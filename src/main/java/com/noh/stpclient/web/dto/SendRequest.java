@@ -29,8 +29,8 @@ public record SendRequest(
             String msgSender,
             @NotBlank(message = "msgType cannot be blank")
             String msgType,
-            @NotBlank(message = "msgUserReference cannot be blank")
-            String msgUserReference,
+            @NotBlank(message = "msgSequence cannot be blank")
+            String msgSequence,
             @NotBlank(message = "format cannot be blank")
             String format
     ) {}

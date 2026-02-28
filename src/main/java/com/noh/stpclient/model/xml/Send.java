@@ -33,7 +33,7 @@ public class Send {
         private String msgType;
 
         @XmlElement(required = true)
-        private String msgUserReference;
+        private String msgSequence;
 
         @XmlElement(required = true)
         private String format;

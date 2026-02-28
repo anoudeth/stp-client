@@ -27,21 +27,27 @@ public record FinancialTransactionRequest(
     public record TransactionData(
             @NotBlank(message = "Message ID cannot be blank")
             String messageId,
-            
+
+            @NotBlank(message = "Message sequence cannot be blank")
+            String msgSequence,
+
             @NotBlank(message = "Business message ID cannot be blank")
             String businessMessageId,
-            
+
             @NotBlank(message = "Sender BIC cannot be blank")
             String senderBic,
-            
+
             @NotBlank(message = "Receiver BIC cannot be blank")
             String receiverBic,
-            
+
             @NotBlank(message = "Instructing agent BIC cannot be blank")
             String instructingAgentBic,
-            
+
             @NotBlank(message = "Instructed agent BIC cannot be blank")
             String instructedAgentBic,
+
+            @NotBlank(message = "Debtor agent BIC cannot be blank")
+            String debtorAgentBic,
             
             @NotBlank(message = "Currency cannot be blank")
             String currency,
@@ -72,7 +78,9 @@ public record FinancialTransactionRequest(
             String creditorAgentAccount,
             
             List<String> debtorAddressLines,
-            
+
+            String instrForNxtAgt,
+
             @NotBlank(message = "Remittance information cannot be blank")
             String remittanceInformation
     ) {}
