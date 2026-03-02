@@ -21,6 +21,7 @@ public class SoapClientConfig {
             com.noh.stpclient.model.xml.LogonResponse.class,
             com.noh.stpclient.model.xml.Send.class,
             com.noh.stpclient.model.xml.Logout.class,
+            com.noh.stpclient.model.xml.LogoutResponse.class,
             com.noh.stpclient.model.xml.GetUpdates.class,
             com.noh.stpclient.model.xml.SendAckNak.class
         );

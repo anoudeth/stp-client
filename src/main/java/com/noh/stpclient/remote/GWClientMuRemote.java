@@ -4,6 +4,7 @@ import com.noh.stpclient.model.xml.GetUpdates;
 import com.noh.stpclient.model.xml.Logon;
 import com.noh.stpclient.model.xml.LogonResponse;
 import com.noh.stpclient.model.xml.Logout;
+import com.noh.stpclient.model.xml.LogoutResponse;
 import com.noh.stpclient.model.xml.Send;
 import com.noh.stpclient.model.xml.SendAckNak;
 import com.noh.stpclient.model.xml.SendResponse;
@@ -28,11 +29,11 @@ public class GWClientMuRemote extends WebServiceGatewaySupport {
         return (LogonResponse) getWebServiceTemplate().marshalSendAndReceive(request);
     }
 
-    public void logout(String sessionId) {
+    public LogoutResponse logout(String sessionId) {
         log.info("Initiating SOAP Logout for session: {}", sessionId);
         final Logout request = new Logout();
         request.setSessionId(sessionId);
-        getWebServiceTemplate().marshalSendAndReceive(request);
+        return (LogoutResponse) getWebServiceTemplate().marshalSendAndReceive(request);
     }
 
     public void getUpdates(String sessionId) {

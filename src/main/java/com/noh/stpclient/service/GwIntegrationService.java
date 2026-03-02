@@ -4,6 +4,7 @@ import com.noh.stpclient.exception.GatewayIntegrationException;
 import com.noh.stpclient.model.ServiceResult;
 import com.noh.stpclient.model.xml.DataPDU;
 import com.noh.stpclient.model.xml.LogonResponse;
+import com.noh.stpclient.model.xml.LogoutResponse;
 import com.noh.stpclient.model.xml.Send;
 import com.noh.stpclient.model.xml.SendResponse;
 import com.noh.stpclient.model.xml.SendResponseData;
@@ -92,7 +93,8 @@ public class GwIntegrationService {
     public ServiceResult<Void> performLogout(String sessionId) {
         Assert.hasText(sessionId, "Session ID must not be empty");
         try {
-            soapClient.logout(sessionId);
+            LogoutResponse response = soapClient.logout(sessionId);
+            log.info("Logout successful for session: {}, response: {}", sessionId, response);
             return ServiceResult.success(null);
         } catch (GatewayIntegrationException e) {
             return ServiceResult.failure(e.getCode(), e.getDescription());
