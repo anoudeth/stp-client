@@ -1,4 +1,5 @@
 package com.noh.stpclient.config.interceptor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,10 +63,10 @@ public class SoapPayloadLoggingInterceptor implements ClientInterceptor {
 
             // Using Java Text Blocks for cleaner log output
             log.debug("""
-                {}
-                ---
-                {}
-                ---""", prefix, payload);
+                    {}
+                    ---
+                    {}
+                    ---""", prefix, payload);
         } catch (IOException e) {
             log.error("Failed to write SOAP message to buffer for logging", e);
         }

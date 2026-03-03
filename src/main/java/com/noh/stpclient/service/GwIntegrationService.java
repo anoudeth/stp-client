@@ -197,6 +197,7 @@ public class GwIntegrationService {
             }
 
             return ServiceResult.success(sendXml);
+
         } catch (JAXBException e) {
             log.error("XML marshaling failed for financial transaction", e);
             return ServiceResult.failure("GW-003", "XML transformation failed: " + e.getMessage());

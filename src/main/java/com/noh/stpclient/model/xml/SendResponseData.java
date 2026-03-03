@@ -13,6 +13,7 @@ import lombok.Data;
         "datetime",
         "mir",
         "ref",
+        "signature",
         "code",
         "description",
         "info"
@@ -27,6 +28,7 @@ public class SendResponseData {
     protected String mir;
     @XmlElement(required = true)
     protected String ref;
+    protected String signature;
     protected String code;
     protected String description;
     protected String info;

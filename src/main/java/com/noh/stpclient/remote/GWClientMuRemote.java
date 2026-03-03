@@ -19,7 +19,7 @@ import org.springframework.ws.client.core.support.WebServiceGatewaySupport;
 public class GWClientMuRemote extends WebServiceGatewaySupport {
 
     public LogonResponse logon(String username, String password, String signedPassword) {
-        log.info("Initiating SOAP Logon for user: {}", username);
+        log.info(":: Initiating SOAP Logon for user: {}", username);
 
         final Logon request = new Logon();
         request.setUsername(username);
@@ -30,26 +30,26 @@ public class GWClientMuRemote extends WebServiceGatewaySupport {
     }
 
     public LogoutResponse logout(String sessionId) {
-        log.info("Initiating SOAP Logout for session: {}", sessionId);
+        log.info(":: Initiating SOAP Logout for session: {}", sessionId);
         final Logout request = new Logout();
         request.setSessionId(sessionId);
         return (LogoutResponse) getWebServiceTemplate().marshalSendAndReceive(request);
     }
 
     public void getUpdates(String sessionId) {
-        log.info("Initiating SOAP GetUpdates for session: {}", sessionId);
+        log.info(":: Initiating SOAP GetUpdates for session: {}", sessionId);
         final GetUpdates request = new GetUpdates();
         request.setSessionId(sessionId);
         getWebServiceTemplate().marshalSendAndReceive(request);
     }
 
     public SendResponse send(Send request) {
-        log.info("Initiating SOAP Send for session: {}", request.getSessionId());
+        log.info(":: Initiating SOAP Send for session: {}", request.getSessionId());
         return (SendResponse) getWebServiceTemplate().marshalSendAndReceive(request);
     }
 
     public void sendAckNak(String messageId, boolean isAck) {
-        log.info("Initiating SOAP SendACKNAK for msg: {}, ack: {}", messageId, isAck);
+        log.info(":: Initiating SOAP SendACKNAK for msg: {}, ack: {}", messageId, isAck);
         final SendAckNak request = new SendAckNak();
         request.setMessageId(messageId);
         request.setAck(isAck);

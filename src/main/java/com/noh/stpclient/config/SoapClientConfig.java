@@ -20,6 +20,8 @@ public class SoapClientConfig {
             com.noh.stpclient.model.xml.Logon.class,
             com.noh.stpclient.model.xml.LogonResponse.class,
             com.noh.stpclient.model.xml.Send.class,
+            com.noh.stpclient.model.xml.SendResponse.class,
+            com.noh.stpclient.model.xml.SendResponseData.class,
             com.noh.stpclient.model.xml.Logout.class,
             com.noh.stpclient.model.xml.LogoutResponse.class,
             com.noh.stpclient.model.xml.GetUpdates.class,
