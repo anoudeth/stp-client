@@ -1,0 +1,80 @@
+Based on the XML sample and the DTOs, here's a sample POST request body for POST /gw/financial-transaction:
+
+  {
+    "requestId": "REQ-20260225-001",
+    "requestDt": "2026-02-25T16:23:04",
+    "data": {
+      "sessionId": "YOUR_SESSION_ID_HERE",
+      "transaction": {
+        "messageId": "2605501332860000",
+        "msgSequence": "2605501332860000",
+        "businessMessageId": "2605501332860000",
+        "senderBic": "IDCBLALA",
+        "receiverBic": "LPDRLALA",
+        "instructingAgentBic": "IDCBLALA",
+        "instructedAgentBic": "COEBLALAXXX",
+        "debtorAgentBic": "IDCBLALA",
+        "currency": "USD",
+        "amount": 64000,
+        "settlementDate": "2026-02-25",
+        "debtorName": "MR KHAMCHANH SOULIGNAPHANH",
+        "debtorAccount": "0700000864347",
+        "debtorAgentAccount": "0000010001150512",
+        "creditorName": "SOMPHONE SAIYAVONG MR",
+        "creditorAccount": "0961227683628",
+        "creditorAgentAccount": "0000010000200510",
+        "debtorAddressLines": ["PHOXAY", "PHOXAY"],
+        "instrForNxtAgt": null,
+        "remittanceInformation": "PURCHASE FOR GOODS"
+      }
+    }
+  }
+
+  Field mapping from XML → DTO:
+
+  ┌────────────────────────┬───────────────────────┐
+  │      XML Element       │       DTO Field       │
+  ├────────────────────────┼───────────────────────┤
+  │ AppHdr/Fr/BICFI        │ senderBic             │
+  ├────────────────────────┼───────────────────────┤
+  │ AppHdr/To/BICFI        │ receiverBic           │
+  ├────────────────────────┼───────────────────────┤
+  │ AppHdr/BizMsgIdr       │ businessMessageId     │
+  ├────────────────────────┼───────────────────────┤
+  │ GrpHdr/MsgId           │ messageId             │
+  ├────────────────────────┼───────────────────────┤
+  │ PmtId/InstrId          │ msgSequence           │
+  ├────────────────────────┼───────────────────────┤
+  │ InstgAgt/BICFI         │ instructingAgentBic   │
+  ├────────────────────────┼───────────────────────┤
+  │ InstdAgt/BICFI         │ instructedAgentBic    │
+  ├────────────────────────┼───────────────────────┤
+  │ DbtrAgt/BICFI          │ debtorAgentBic        │
+  ├────────────────────────┼───────────────────────┤
+  │ IntrBkSttlmAmt Ccy     │ currency              │
+  ├────────────────────────┼───────────────────────┤
+  │ IntrBkSttlmAmt value   │ amount                │
+  ├────────────────────────┼───────────────────────┤
+  │ IntrBkSttlmDt          │ settlementDate        │
+  ├────────────────────────┼───────────────────────┤
+  │ Dbtr/Nm                │ debtorName            │
+  ├────────────────────────┼───────────────────────┤
+  │ DbtrAcct/Id/Othr/Id    │ debtorAccount         │
+  ├────────────────────────┼───────────────────────┤
+  │ DbtrAgtAcct/Id/Othr/Id │ debtorAgentAccount    │
+  ├────────────────────────┼───────────────────────┤
+  │ Cdtr/Nm                │ creditorName          │
+  ├────────────────────────┼───────────────────────┤
+  │ CdtrAcct/Id/Othr/Id    │ creditorAccount       │
+  ├────────────────────────┼───────────────────────┤
+  │ CdtrAgtAcct/Id/Othr/Id │ creditorAgentAccount  │
+  ├────────────────────────┼───────────────────────┤
+  │ Dbtr/PstlAdr/AdrLine   │ debtorAddressLines    │
+  ├────────────────────────┼───────────────────────┤
+  │ InstrForNxtAgt         │ instrForNxtAgt        │
+  ├────────────────────────┼───────────────────────┤
+  │ RmtInf/Ustrd           │ remittanceInformation │
+  └────────────────────────┴───────────────────────┘
+
+  Note: If you use the /gw/send endpoint instead of /gw/financial-transaction, the sessionId inside data is auto-populated from logon — you can pass any placeholder value
+  there.

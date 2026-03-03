@@ -1,0 +1,123 @@
+<DataPDU xmlns="urn:cma:stp:xsd:stp.1.0">  
+  <Body> 
+    <AppHdr xmlns="urn:iso:std:iso:20022:tech:xsd:head.001.001.01" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">  
+      <Fr> 
+        <FIId> 
+          <FinInstnId> 
+            <BICFI>IDCBLALA</BICFI> 
+          </FinInstnId> 
+        </FIId> 
+      </Fr>  
+      <To> 
+        <FIId> 
+          <FinInstnId> 
+            <BICFI>LPDRLALA</BICFI> 
+          </FinInstnId> 
+        </FIId> 
+      </To>  
+      <BizMsgIdr>2605501332860000</BizMsgIdr>  
+      <MsgDefIdr>pacs.008.001.08</MsgDefIdr>  
+      <BizSvc>RTGS</BizSvc>  
+      <CreDt>2026-02-25T16:23:04.000Z</CreDt> 
+    </AppHdr>  
+    <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">  
+      <FIToFICstmrCdtTrf> 
+        <GrpHdr> 
+          <MsgId>2605501332860000</MsgId>  
+          <CreDtTm>2026-02-25T16:23:04</CreDtTm>  
+          <NbOfTxs>1</NbOfTxs>  
+          <SttlmInf> 
+            <SttlmMtd>CLRG</SttlmMtd> 
+          </SttlmInf> 
+        </GrpHdr>  
+        <CdtTrfTxInf> 
+          <PmtId> 
+            <InstrId>2605501332860000</InstrId>  
+            <EndToEndId>NOTPROVIDED</EndToEndId>  
+            <TxId>2605501332860000</TxId> 
+          </PmtId>  
+          <PmtTpInf> 
+            <ClrChanl>RTGS</ClrChanl>  
+            <SvcLvl> 
+              <Prtry>0010</Prtry> 
+            </SvcLvl>  
+            <LclInstrm> 
+              <Prtry>RTGS-SSCT</Prtry> 
+            </LclInstrm>  
+            <CtgyPurp> 
+              <Prtry>001</Prtry> 
+            </CtgyPurp> 
+          </PmtTpInf>  
+          <IntrBkSttlmAmt Ccy="USD">64000</IntrBkSttlmAmt>  
+          <IntrBkSttlmDt>2026-02-25</IntrBkSttlmDt>  
+          <ChrgBr>SHAR</ChrgBr>  
+          <InstgAgt> 
+            <FinInstnId> 
+              <BICFI>IDCBLALA</BICFI> 
+            </FinInstnId> 
+          </InstgAgt>  
+          <InstdAgt> 
+            <FinInstnId> 
+              <BICFI>COEBLALAXXX</BICFI> 
+            </FinInstnId> 
+          </InstdAgt>  
+          <Dbtr> 
+            <Nm>MR KHAMCHANH SOULIGNAPHANH</Nm>  
+            <PstlAdr>
+            <AdrLine> PHOXAY</AdrLine>
+            <AdrLine> </AdrLine>
+            <AdrLine> PHOXAY</AdrLine>
+            <AdrLine> </AdrLine>
+            </PstlAdr> 
+          </Dbtr>  
+          <DbtrAcct> 
+            <Id> 
+              <Othr> 
+                <Id>0700000864347</Id> 
+              </Othr> 
+            </Id> 
+          </DbtrAcct>  
+          <DbtrAgt> 
+            <FinInstnId> 
+              <BICFI>IDCBLALA</BICFI> 
+            </FinInstnId> 
+          </DbtrAgt>  
+          <DbtrAgtAcct> 
+            <Id> 
+              <Othr> 
+                <Id>0000010001150512</Id> 
+              </Othr> 
+            </Id> 
+          </DbtrAgtAcct>  
+          <CdtrAgt> 
+            <FinInstnId> 
+              <BICFI>COEBLALAXXX</BICFI> 
+            </FinInstnId> 
+          </CdtrAgt>  
+          <CdtrAgtAcct> 
+            <Id> 
+              <Othr> 
+                <Id>0000010000200510</Id> 
+              </Othr> 
+            </Id> 
+          </CdtrAgtAcct>  
+          <Cdtr> 
+            <Nm>SOMPHONE SAIYAVONG MR</Nm>  
+            <PstlAdr/> 
+          </Cdtr>  
+          <CdtrAcct> 
+            <Id> 
+              <Othr> 
+                <Id>0961227683628</Id> 
+              </Othr> 
+            </Id> 
+          </CdtrAcct>  
+          <InstrForNxtAgt/>  
+          <RmtInf> 
+            <Ustrd>PURCHASE FOR GOODS</Ustrd> 				
+          </RmtInf> 
+        </CdtTrfTxInf> 
+      </FIToFICstmrCdtTrf> 
+    </Document> 
+  </Body> 
+</DataPDU>
