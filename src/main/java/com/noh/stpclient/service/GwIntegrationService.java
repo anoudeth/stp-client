@@ -51,17 +51,21 @@ public class GwIntegrationService {
     private String stpUsername;
     @Value("${stp.soap.password}")
     private String stpPassword;
+    @Value("${stp.soap.rtgs-receiver}")
+    private String rtgsMsgReceiver;
 
     public GwIntegrationService(GWClientMuRemote soapClient,
                                 CryptoManager cryptoManager,
                                 DataPDUTransformer dataPDUTransformer,
                                 @Value("${stp.soap.username}") String stpUsername,
-                                @Value("${stp.soap.password}") String stpPassword) {
+                                @Value("${stp.soap.password}") String stpPassword,
+                                @Value("${stp.soap.rtgs-receiver}") String rtgsMsgReceiver) {
         this.soapClient = soapClient;
         this.cryptoManager = cryptoManager;
         this.dataPDUTransformer = dataPDUTransformer;
         this.stpUsername = stpUsername;
         this.stpPassword = stpPassword;
+        this.rtgsMsgReceiver = rtgsMsgReceiver;
     }
 
     public ServiceResult<LogonResponseDto> performLogon() {
@@ -209,7 +213,7 @@ public class GwIntegrationService {
         soapRequest.setSessionId(request.sessionId());
         Send.Message msg = new Send.Message();
         msg.setBlock4(signedXml);
-        msg.setMsgReceiver(request.transaction().receiverBic());
+        msg.setMsgReceiver(rtgsMsgReceiver);
         msg.setMsgSender(request.transaction().senderBic());
         msg.setMsgType("pacs.008.001.08");
         msg.setMsgSequence(request.transaction().msgSequence());
@@ -264,7 +268,7 @@ public class GwIntegrationService {
             soapRequest.setSessionId(request.sessionId());
             Send.Message soapMessage = new Send.Message();
             soapMessage.setBlock4(signedXmlContent);
-            soapMessage.setMsgReceiver(request.transaction().receiverBic());
+            soapMessage.setMsgReceiver(rtgsMsgReceiver);
             soapMessage.setMsgSender(request.transaction().senderBic());
             soapMessage.setMsgType("pacs.008.001.08");
             soapMessage.setMsgSequence(request.transaction().msgSequence());
