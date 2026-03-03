@@ -11,3 +11,7 @@ ks:
   pass: 2wsx@WSX
   alias: te-c44b72d1-77d0-4664-bb5c-a61eaa6fe971
   path: key/LBBCLALABXXX.pfx  # Relative to project root
+
+gw:
+  cert:
+    alias: gw-cert  # Import gateway cert into LBBCLALABXXX.pfx with: keytool -importcert -keystore key/LBBCLALABXXX.pfx -storetype PKCS12 -storepass 2wsx@WSX -alias gw-cert -file gateway.cer

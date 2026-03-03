@@ -5,13 +5,16 @@ import org.bouncycastle.cms.CMSProcessableByteArray;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.CMSSignedDataGenerator;
 import org.bouncycastle.cms.CMSTypedData;
+import org.bouncycastle.cms.SignerInformation;
 import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder;
+import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoVerifierBuilder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import com.noh.stpclient.model.xml.SendResponseData;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -71,6 +74,8 @@ public class CryptoManager {
     private String keyAlias;
     @Value("${ks.path}")
     private String ksPath;
+    @Value("${gw.cert.alias}")
+    private String gwCertAlias;
 
 
 
@@ -253,6 +258,50 @@ public class CryptoManager {
         signature.sign(dsc);
 
         return doc;
+    }
+
+    /**
+     * Verifies the CMS signature on a send response from the gateway.
+     * The gateway signs type+datetime+mir+ref concatenated as UTF-16LE bytes (detached CMS).
+     * Mirrors the approach in XmlSigner.verify() but for CMS instead of XML signatures.
+     */
+    public boolean verifyResponseSignature(SendResponseData data) throws Exception {
+        if (data.getSignature() == null || data.getSignature().isBlank()) {
+            throw new IllegalArgumentException("Response signature is empty");
+        }
+
+        X509Certificate gatewayCert = loadGatewayCert();
+
+        byte[] signatureBytes = Base64.getDecoder().decode(data.getSignature());
+
+        // Gateway signs the concatenation of key response fields, same UTF-16LE encoding as signValue
+        String signedContent = nullToEmpty(data.getType())
+                + nullToEmpty(data.getDatetime())
+                + nullToEmpty(data.getMir())
+                + nullToEmpty(data.getRef());
+        byte[] contentBytes = signedContent.getBytes("UTF-16LE");
+
+        CMSSignedData cms = new CMSSignedData(new CMSProcessableByteArray(contentBytes), signatureBytes);
+
+        for (SignerInformation signer : cms.getSignerInfos().getSigners()) {
+            if (signer.verify(new JcaSimpleSignerInfoVerifierBuilder().setProvider(PROVIDER).build(gatewayCert))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private X509Certificate loadGatewayCert() throws Exception {
+        KeyStore ks = loadKeystore();
+        X509Certificate cert = (X509Certificate) ks.getCertificate(this.gwCertAlias);
+        if (cert == null) {
+            throw new IllegalStateException("Gateway certificate not found in keystore with alias: " + this.gwCertAlias);
+        }
+        return cert;
+    }
+
+    private static String nullToEmpty(String value) {
+        return value == null ? "" : value;
     }
 
     public static void main(String[] args) throws KeyStoreException, NoSuchAlgorithmException, IOException, CertificateException, UnrecoverableKeyException {

@@ -139,12 +139,24 @@ public class GwIntegrationService {
             soapRequest.setMessage(soapMessage);
 
             SendResponse response = soapClient.send(soapRequest);
-            
+
             if (response == null || response.getData() == null) {
                 return ServiceResult.failure("GW-002", "Received empty response from Gateway");
             }
-            
+
             SendResponseData data = response.getData();
+
+            try {
+                boolean signatureValid = cryptoManager.verifyResponseSignature(data);
+                if (!signatureValid) {
+                    log.warn("Gateway response signature verification FAILED for session: {}", request.sessionId());
+                } else {
+                    log.info("Gateway response signature verified OK for session: {}", request.sessionId());
+                }
+            } catch (Exception e) {
+                log.warn("Gateway response signature verification error for session: {}: {}", request.sessionId(), e.getMessage());
+            }
+
             if ("NAK".equals(data.getType())) {
                 return ServiceResult.failure(data.getCode(), data.getDescription());
             }
@@ -192,6 +204,18 @@ public class GwIntegrationService {
             }
 
             SendResponseData data = response.getData();
+
+            try {
+                boolean signatureValid = cryptoManager.verifyResponseSignature(data);
+                if (!signatureValid) {
+                    log.warn("Gateway response signature verification FAILED for session: {}", request.sessionId());
+                } else {
+                    log.info("Gateway response signature verified OK for session: {}", request.sessionId());
+                }
+            } catch (Exception e) {
+                log.warn("Gateway response signature verification error for session: {}: {}", request.sessionId(), e.getMessage());
+            }
+
             if ("NAK".equals(data.getType())) {
                 return ServiceResult.failure(data.getCode(), data.getDescription());
             }
