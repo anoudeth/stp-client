@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <property name="CONSOLE_LOG_PATTERN"
+              value="${CONSOLE_LOG_PATTERN:-%clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
+    <property name="FILE_LOG_PATTERN"
+              value="${FILE_LOG_PATTERN:-%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%t] %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
+    <property name="LOG_LOCATION" value="./logs"/>
+    <property name="LOG_ARCHIVED_DIR" value="archived"/>
+    <!-- Use springProperty to safely read the application name from application.properties -->
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="RollingFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- Combine the app name, hostname, and .log extension -->
+        <file>${LOG_LOCATION}/${APP_NAME}_${HOSTNAME}.log</file>
+
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_LOCATION}/${LOG_ARCHIVED_DIR}/${APP_NAME}-${HOSTNAME}_%d{yyyyMMdd}_%i.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+    </appender>
+
+    <springProfile name="local">
+        <root level="info">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="RollingFile"/>
+        </root>
+        <logger name="org.hibernate" level="error" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="RollingFile"/>
+        </logger>
+        <logger name="com.noh.stpclient" level="trace" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="RollingFile"/>
+        </logger>
+    </springProfile>
+
+    <springProfile name="dev">
+        <root level="info">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="RollingFile"/>
+        </root>
+        <logger name="org.hibernate" level="error" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="RollingFile"/>
+        </logger>
+        <logger name="com.noh.stpclient" level="trace" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="RollingFile"/>
+        </logger>
+    </springProfile>
+
+    <springProfile name="pro">
+        <root level="info">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="RollingFile"/>
+        </root>
+        <logger name="org.hibernate" level="error" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="RollingFile"/>
+        </logger>
+        <logger name="com.noh.stpclient" level="trace" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="RollingFile"/>
+        </logger>
+    </springProfile>
+
+
+</configuration>
