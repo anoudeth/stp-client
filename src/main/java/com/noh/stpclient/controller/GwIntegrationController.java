@@ -147,7 +147,7 @@ public class GwIntegrationController {
             return ResponseEntity.badRequest().body(finalResponse);
         }
 
-        ServiceResult<Void> serviceResult = gwIntegrationService.performSendAckNak(request.getData().messageId(), request.getData().isAck());
+        ServiceResult<Void> serviceResult = gwIntegrationService.performSendAckNak(request.getData());
         ApiResponse<Void> finalResponse = serviceResult.isSuccess()
                 ? responseBuilder.buildSuccessResponse(null, null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
