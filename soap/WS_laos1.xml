@@ -267,7 +267,7 @@
    <soapenv:Header/>
    <soapenv:Body>
       <int:logout>
-         <session_id>JSESSIONID=78DAFx428FF2473E12AEBDB3469B04992</session_id>
+         <session_id>JSESSIONID=C19F27E11A03E7179FEF6F4814D5C6F9</session_id>
       </int:logout>
    </soapenv:Body>
 </soapenv:Envelope>]]></con:request><con:credentials><con:authType>No Authorization</con:authType></con:credentials><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:wsaConfig mustUnderstand="NONE" version="200508" action="http://integration.gwclient.smallsystems.cma.se/GWClientMU/logoutRequest"/><con:wsrmConfig version="1.2"/></con:call></con:operation><con:operation isOneWay="false" action="" name="send" bindingOperationName="send" type="Request-Response" inputName="" receivesAttachments="false" sendsAttachments="false" anonymous="optional" id="d260fdfb-8d77-4dc2-af85-01e64695e067"><con:settings/><con:call name="send" id="0d72d645-c759-4f17-8e76-c2f9748db755"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>http://172.16.2.8:7080/GWClientMUService/GWClientMU?wsdl</con:endpoint><con:request><![CDATA[<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:int="http://integration.gwclient.smallsystems.cma.se/">
@@ -448,139 +448,134 @@
    <soapenv:Header/>
    <soapenv:Body>
       <ns2:send xmlns:ns2="http://integration.gwclient.smallsystems.cma.se/">
-    <session_id>JSESSIONID=162A1A04791138F1C8A354F3D85615DE</session_id>
+    <session_id>JSESSIONID=7F78C41DFC69A465054312AA0863EE57</session_id>
     <message>
-        <block4><![CDATA[<?xml version="1.0" encoding="UTF-8"?><ns4:DataPDU xmlns:ns4="urn:cma:stp:xsd:stp.1.0" xmlns:ns2="urn:iso:std:iso:20022:tech:xsd:head.001.001.01" xmlns:ns3="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
-    <Body>
-        <ns2:AppHdr>
-            <Fr>
-                <FIId>
-                    <FinInstnId>
-                        <BICFI>LBBCLALABXXX</BICFI>
-                    </FinInstnId>
-                </FIId>
-            </Fr>
-            <To>
-                <FIId>
-                    <FinInstnId>
-                        <BICFI>LPDRLALAXATS</BICFI>
-                    </FinInstnId>
-                </FIId>
-            </To>
-            <BizMsgIdr>2605501332860000</BizMsgIdr>
-            <MsgDefIdr>pacs.008.001.08</MsgDefIdr>
-            <BizSvc>RTGS</BizSvc>
-            <CreDt>2026-02-28T16:24:52.483Z</CreDt>
-        <Sgntr xmlns="urn:iso:std:iso:20022:tech:xsd:head.001.001.01"><ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:SignedInfo><ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/><ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/><ds:Reference URI="#_56460a90-bb60-42bd-82ce-2d584282925c"><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>ItnKl7dlsvw4KnIeTePa1/RO8ezAeML78orlBJCEjGs=</ds:DigestValue></ds:Reference><ds:Reference Type="http://uri.etsi.org/01903/v1.3.2#SignedProperties" URI="#_861dee64-5f72-42dd-bc02-7d8015930406-signedprops"><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>AADA65O1i7Q/z7xuKzROXXR5XBnNKOxzzEjzx4pDPYw=</ds:DigestValue></ds:Reference><ds:Reference><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>eHpQwZC3uRFPG4vdrm5a7ILRcIE+puJXxc33CuEQG7c=</ds:DigestValue></ds:Reference></ds:SignedInfo><ds:SignatureValue>BBdLD9U/sPN3S1SMVUV18n6alNFGOoktCGAZE01nmdn7YeScC0gCv6J8wW/3O+ZaXVNEs2XFD5dw&#13;
-dCiOxRaze2ZwydvyrloYXpVXkrEcCsbKy0GbtDeYXoIdls7S267WtOh7jU900qlBZUnu6oIDoj60&#13;
-5LGORxtx6PK4hpkPFP0V9Sgww09Kmo6KiZfSZUmBbqyYHHnZRlngTs8O7CIdr2O6FGcFlPbXmEfz&#13;
-Anfk+AxjS7m50h8hgz3tC+fT63Q3agHMrx1O5iRd4liGpNkHe+Y4CA8NFMD2eZzgcbCmA602ctzk&#13;
-yebaGZ9qeLX9w4wvWK9/YycDv/TtVc0/uRO3RA==</ds:SignatureValue><ds:KeyInfo Id="_56460a90-bb60-42bd-82ce-2d584282925c"><ds:X509Data><ds:X509IssuerSerial><ds:X509IssuerName>CN=NPS-CA, DC=NPSPRO, DC=bolnet, DC=gov, DC=la</ds:X509IssuerName><ds:X509SerialNumber>2386179743011944409800201443370907816960197911</ds:X509SerialNumber></ds:X509IssuerSerial></ds:X509Data></ds:KeyInfo><ds:Object><xades:QualifyingProperties xmlns:xades="http://uri.etsi.org/01903/v1.3.2#"><xades:SignedProperties Id="_861dee64-5f72-42dd-bc02-7d8015930406-signedprops"><xades:SignedSignatureProperties><xades:SigningTime>2026-02-28T16:24:53+0700</xades:SigningTime></xades:SignedSignatureProperties></xades:SignedProperties></xades:QualifyingProperties></ds:Object></ds:Signature></Sgntr></ns2:AppHdr>
-        <ns3:Document>
-            <FIToFICstmrCdtTrf>
-                <GrpHdr>
-                    <MsgId>2605501332860000</MsgId>
-                    <CreDtTm>2026-02-28T16:24:52</CreDtTm>
-                    <NbOfTxs>1</NbOfTxs>
-                    <SttlmInf>
-                        <SttlmMtd>CLRG</SttlmMtd>
-                    </SttlmInf>
-                </GrpHdr>
-                <CdtTrfTxInf>
-                    <PmtId>
-                        <InstrId>2605501332860000</InstrId>
-                        <EndToEndId>NOTPROVIDED</EndToEndId>
-                        <TxId>2605501332860000</TxId>
-                    </PmtId>
-                    <PmtTpInf>
-                        <ClrChanl>RTGS</ClrChanl>
-                        <SvcLvl>
-                            <Prtry>0010</Prtry>
-                        </SvcLvl>
-                        <LclInstrm>
-                            <Prtry>RTGS-SSCT</Prtry>
-                        </LclInstrm>
-                        <CtgyPurp>
-                            <Prtry>001</Prtry>
-                        </CtgyPurp>
-                    </PmtTpInf>
-                    <IntrBkSttlmAmt Ccy="USD">
-                        <value>64000</value>
-                    </IntrBkSttlmAmt>
-                    <IntrBkSttlmDt>2026-02-25</IntrBkSttlmDt>
-                    <ChrgBr>SHAR</ChrgBr>
-                    <InstgAgt>
-                        <FinInstnId>
-                            <BICFI>LBBCLALABXXX</BICFI>
-                        </FinInstnId>
-                    </InstgAgt>
-                    <InstdAgt>
-                        <FinInstnId>
-                            <BICFI>COEBLALAXXX</BICFI>
-                        </FinInstnId>
-                    </InstdAgt>
-                    <Dbtr>
-                        <Nm>MR KHAMCHANH SOULIGNAPHANH</Nm>
-                        <PstlAdr>
-                            <AdrLine> PHOXAY</AdrLine>
-                            <AdrLine> </AdrLine>
-                            <AdrLine> PHOXAY</AdrLine>
-                            <AdrLine> </AdrLine>
-                        </PstlAdr>
-                    </Dbtr>
-                    <DbtrAcct>
-                        <Id>
-                            <Othr>
-                                <Id>0700000864347</Id>
-                            </Othr>
-                        </Id>
-                    </DbtrAcct>
-                    <DbtrAgt>
-                        <FinInstnId>
-                            <BICFI>LBBCLALABXXX</BICFI>
-                        </FinInstnId>
-                    </DbtrAgt>
-                    <DbtrAgtAcct>
-                        <Id>
-                            <Othr>
-                                <Id>0000010001150512</Id>
-                            </Othr>
-                        </Id>
-                    </DbtrAgtAcct>
-                    <CdtrAgt>
-                        <FinInstnId>
-                            <BICFI>COEBLALAXXX</BICFI>
-                        </FinInstnId>
-                    </CdtrAgt>
-                    <CdtrAgtAcct>
-                        <Id>
-                            <Othr>
-                                <Id>0000010000200510</Id>
-                            </Othr>
-                        </Id>
-                    </CdtrAgtAcct>
-                    <Cdtr>
-                        <Nm>SOMPHONE SAIYAVONG MR</Nm>
-                        <PstlAdr/>
-                    </Cdtr>
-                    <CdtrAcct>
-                        <Id>
-                            <Othr>
-                                <Id>0961227683628</Id>
-                            </Othr>
-                        </Id>
-                    </CdtrAcct>
-                    <InstrForNxtAgt>
-                        <InstrInf>/BNF/</InstrInf>
-                    </InstrForNxtAgt>
-                    <RmtInf>
-                        <Ustrd>PURCHASE FOR GOODS</Ustrd>
-                    </RmtInf>
-                </CdtTrfTxInf>
-            </FIToFICstmrCdtTrf>
-        </ns3:Document>
-    </Body>
-</ns4:DataPDU>]]]]>><![CDATA[</block4>
+        <block4><![CDATA[<DataPDU xmlns="urn:cma:stp:xsd:stp.1.0">
+  <Body>
+<AppHdr xmlns="urn:iso:std:iso:20022:tech:xsd:head.001.001.01">
+	<Fr>
+		<FIId>
+			<FinInstnId>
+				<BICFI>LBBCLALA</BICFI>
+			</FinInstnId>
+		</FIId>
+	</Fr>
+	<To>
+		<FIId>
+			<FinInstnId>
+				<BICFI>LPDRLALA</BICFI>
+			</FinInstnId>
+		</FIId>
+	</To>
+	<BizMsgIdr>BIZ-15293465472450955</BizMsgIdr>
+	<MsgDefIdr>pacs.008.001.08</MsgDefIdr>
+	<BizSvc>RTGS</BizSvc>
+	<CreDt>2026-03-04T01:56:55.142Z</CreDt>
+<Sgntr><ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:SignedInfo><ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/><ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/><ds:Reference URI="#_0a2e1fa1-0926-4314-a12c-3882c867c416"><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>bQPyDqe8WKEQJRBnW8fhIYswLDEJzewCXJy/Icu6mhM=</ds:DigestValue></ds:Reference><ds:Reference Type="http://uri.etsi.org/01903/v1.3.2#SignedProperties" URI="#_7af2dc4c-9b1b-4f12-9c9c-d7d33560764e-signedprops"><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>VjDR41eXheWUNfspu/3lfncnk34UTK0KB6hADcYCONk=</ds:DigestValue></ds:Reference><ds:Reference><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>/hFDuVFvMbP7mfYbIqhpIV0C6YoOn1c9E3/6dTTPcP4=</ds:DigestValue></ds:Reference></ds:SignedInfo><ds:SignatureValue>f/ai/YKYPGKctovhn1f29zJfV1Ys5fO0Zb6So+E7rOv2FEj+VJke5ZAYxZPb4sCwzbs1lcsKrBJ0&#xD;
+pS3g0bYgO0kQvAhmsMyIywwjdDih83/VkoX5noXA1qJBafTL2lX9cRsNqKIk4QJewRfcrppr4/wS&#xD;
+UI0TddRBHA6+0S6Liy5aKQfHr7lZQw2eL/vta2Z5LaHPZ8GTuaGLW0om56cZtmV9nzbe9k4fG/pm&#xD;
+4zf2nyzVEJmTHVAOWYlSnZI1xRPGLgiBzriYomfBNrHPNWAwc1XQaDYnjic02w6s2Z0nk4rvqLUs&#xD;
+DnBrUNHmNSQvMcTUA96BLk3grPawnNWuwhOSSA==</ds:SignatureValue><ds:KeyInfo Id="_0a2e1fa1-0926-4314-a12c-3882c867c416"><ds:X509Data><ds:X509IssuerSerial><ds:X509IssuerName>CN=NPS-CA, DC=NPSPRO, DC=bolnet, DC=gov, DC=la</ds:X509IssuerName><ds:X509SerialNumber>2386179743011944409800201443370907816960197911</ds:X509SerialNumber></ds:X509IssuerSerial></ds:X509Data></ds:KeyInfo><ds:Object><xades:QualifyingProperties xmlns:xades="http://uri.etsi.org/01903/v1.3.2#"><xades:SignedProperties Id="_7af2dc4c-9b1b-4f12-9c9c-d7d33560764e-signedprops"><xades:SignedSignatureProperties><xades:SigningTime>2026-03-04T09:06:37Z</xades:SigningTime></xades:SignedSignatureProperties></xades:SignedProperties></xades:QualifyingProperties></ds:Object></ds:Signature></Sgntr></AppHdr>
+
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+    <FIToFICstmrCdtTrf>
+        <GrpHdr>
+            <MsgId>LBBCOP010304B02</MsgId>
+            <CreDtTm>2026-03-04T08:56:27</CreDtTm>
+            <NbOfTxs>1</NbOfTxs>
+            <SttlmInf>
+                <SttlmMtd>CLRG</SttlmMtd>
+            </SttlmInf>
+        </GrpHdr>
+        <CdtTrfTxInf>
+            <PmtId>
+                <InstrId>LBBCOP010304B02</InstrId>
+                <EndToEndId>NOTPROVIDED</EndToEndId>
+                <TxId>LBBCOP010304B02</TxId>
+            </PmtId>
+            <PmtTpInf>
+                <ClrChanl>RTGS</ClrChanl>
+                <SvcLvl>
+                    <Prtry>0010</Prtry>
+                </SvcLvl>
+                <LclInstrm>
+                    <Prtry>RTGS-SSCT</Prtry>
+                </LclInstrm>
+                <CtgyPurp>
+                    <Prtry>001</Prtry>
+                </CtgyPurp>
+            </PmtTpInf>
+            <IntrBkSttlmAmt Ccy="LAK">10000.00</IntrBkSttlmAmt>
+            <IntrBkSttlmDt>2026-03-04</IntrBkSttlmDt>
+            <ChrgBr>SHAR</ChrgBr>
+            <InstgAgt>
+                <FinInstnId>
+                    <BICFI>LBBCLALA</BICFI>
+                </FinInstnId>
+            </InstgAgt>
+            <InstdAgt>
+                <FinInstnId>
+                    <BICFI>ACLBLALA</BICFI>
+                </FinInstnId>
+            </InstdAgt>
+            <Dbtr>
+                <Nm>MS INDAVANH NUANTHASING</Nm>
+                <PstlAdr>
+                    <AdrLine>thantluang</AdrLine>
+                </PstlAdr>
+            </Dbtr>
+            <DbtrAcct>
+                <Id>
+                    <Othr>
+                        <Id>22222222222</Id>
+                    </Othr>
+                </Id>
+            </DbtrAcct>
+            <DbtrAgt>
+                <FinInstnId>
+                    <BICFI>LBBCLALA</BICFI>
+                </FinInstnId>
+            </DbtrAgt>
+            <DbtrAgtAcct>
+                <Id>
+                    <Othr>
+                        <Id>0000000208530509</Id>
+                    </Othr>
+                </Id>
+            </DbtrAgtAcct>
+            <CdtrAgt>
+                <FinInstnId>
+                    <BICFI>ACLBLALA</BICFI>
+                </FinInstnId>
+            </CdtrAgt>
+            <CdtrAgtAcct>
+                <Id>
+                    <Othr>
+                        <Id>0000000001410508</Id>
+                    </Othr>
+                </Id>
+            </CdtrAgtAcct>
+            <Cdtr>
+                <Nm>ms manivanh</Nm>
+                <PstlAdr>
+                    <AdrLine>thalart</AdrLine>
+                </PstlAdr>
+            </Cdtr>
+            <CdtrAcct>
+                <Id>
+                    <Othr>
+                        <Id>6468778356346</Id>
+                    </Othr>
+                </Id>
+            </CdtrAcct>
+            <RmtInf>
+                <Ustrd>test</Ustrd>
+            </RmtInf>
+        </CdtTrfTxInf>
+    </FIToFICstmrCdtTrf>
+</Document>
+</Body>
+</DataPDU>]]]]>><![CDATA[</block4>
         <msgReceiver>LPDRLALAXATS</msgReceiver>
         <msgSender>LBBCLALABXXX</msgSender>
         <msgSequence>pacs.008.001.08</msgSequence>
@@ -593,12 +588,11 @@ yebaGZ9qeLX9w4wvWK9/YycDv/TtVc0/uRO3RA==</ds:SignatureValue><ds:KeyInfo Id="_564
    <soapenv:Header/>
    <soapenv:Body>
       <int:sendACKNAK>
-         <session_id>JSESSIONID=D2B8D0778AE3C35388E7B8E912A31D2C</session_id>
+         <session_id>JSESSIONID=DC5F868BD6C51F4B98A8C500B379B134</session_id>
          <data>
            <type>ACK</type>
-            <datetime>2412181444</datetime>
-            <mir>241218LPDRLALAAATS0001005116</mir>
-            <ref>D000000000129086</ref>
+            <datetime>2603041003</datetime>
+            <mir>260304LBBCLALABXXX0001000001</mir>
 
             <!--Optional:-->
             <signature>?</signature>
