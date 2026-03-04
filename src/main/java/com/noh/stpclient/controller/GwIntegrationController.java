@@ -1,18 +1,18 @@
 package com.noh.stpclient.controller;
 
-import com.noh.stpclient.exception.GatewayIntegrationException;
 import com.noh.stpclient.model.ApiRequest;
 import com.noh.stpclient.model.ApiResponse;
 import com.noh.stpclient.model.ServiceResult;
 import com.noh.stpclient.service.GwIntegrationService;
+import com.noh.stpclient.service.SessionManager;
 import com.noh.stpclient.utils.ApiResponseBuilder;
 import com.noh.stpclient.web.dto.FinancialTransactionRequest;
 import com.noh.stpclient.web.dto.GetUpdatesRequest;
 import com.noh.stpclient.web.dto.LogonRequest;
 import com.noh.stpclient.web.dto.LogonResponseDto;
 import com.noh.stpclient.web.dto.LogoutRequest;
-import com.noh.stpclient.web.dto.SendResponseDto;
 import com.noh.stpclient.web.dto.SendAckNakRequest;
+import com.noh.stpclient.web.dto.SendResponseDto;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,12 +31,12 @@ import java.util.Locale;
 public class GwIntegrationController {
 
     private final GwIntegrationService gwIntegrationService;
+    private final SessionManager sessionManager;
     private final ApiResponseBuilder responseBuilder;
 
     @PostMapping("/logon")
     public ResponseEntity<ApiResponse<LogonResponseDto>> logon(@Valid @RequestBody ApiRequest<LogonRequest> request) {
         log.info(">>> START logon >>>");
-        log.info("> request body: {}", request);
 
         if (request.getData() == null) {
             ApiResponse<LogonResponseDto> finalResponse = responseBuilder.buildFailureResponse(
@@ -49,15 +49,13 @@ public class GwIntegrationController {
                 ? responseBuilder.buildSuccessResponse(serviceResult.getData(), null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
 
-        log.info("< Final response: {}", finalResponse);
-        log.info("<<< END logon request <<<");
+        log.info("<<< END logon <<<");
         return ResponseEntity.ok(finalResponse);
     }
 
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(@Valid @RequestBody ApiRequest<LogoutRequest> request) {
         log.info(">>> START logout >>>");
-        log.info("> request body: {}", request);
 
         if (request.getData() == null) {
             ApiResponse<Void> finalResponse = responseBuilder.buildFailureResponse(
@@ -66,19 +64,20 @@ public class GwIntegrationController {
         }
 
         ServiceResult<Void> serviceResult = gwIntegrationService.performLogout(request.getData().sessionId());
+        // Invalidate the shared session if the caller explicitly logs out
+        sessionManager.invalidate();
+
         ApiResponse<Void> finalResponse = serviceResult.isSuccess()
                 ? responseBuilder.buildSuccessResponse(null, null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
 
-        log.info("< Final response: {}", finalResponse);
-        log.info("<<< END logout request <<<");
+        log.info("<<< END logout <<<");
         return ResponseEntity.ok(finalResponse);
     }
 
     @PostMapping("/get-updates")
     public ResponseEntity<ApiResponse<Void>> getUpdates(@Valid @RequestBody ApiRequest<GetUpdatesRequest> request) {
         log.info(">>> START getUpdates >>>");
-        log.info("> request body: {}", request);
 
         if (request.getData() == null) {
             ApiResponse<Void> finalResponse = responseBuilder.buildFailureResponse(
@@ -91,15 +90,13 @@ public class GwIntegrationController {
                 ? responseBuilder.buildSuccessResponse(null, null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
 
-        log.info("< Final response: {}", finalResponse);
-        log.info("<<< END getUpdates request <<<");
+        log.info("<<< END getUpdates <<<");
         return ResponseEntity.ok(finalResponse);
     }
 
     @PostMapping("/send")
     public ResponseEntity<ApiResponse<SendResponseDto>> send(@Valid @RequestBody ApiRequest<FinancialTransactionRequest> request) {
         log.info(">>> START send >>>");
-        log.info("> request body: {}", request);
 
         if (request.getData() == null) {
             ApiResponse<SendResponseDto> finalResponse = responseBuilder.buildFailureResponse(
@@ -107,39 +104,21 @@ public class GwIntegrationController {
             return ResponseEntity.badRequest().body(finalResponse);
         }
 
-        // 1. logon
-        ServiceResult<LogonResponseDto> svRsLogon = gwIntegrationService.performLogon();
-        if (!svRsLogon.isSuccess()) {
-            ApiResponse<SendResponseDto> failureResponse = responseBuilder.buildFailureResponse(
-                    ServiceResult.failure(svRsLogon.getErrorCode(), svRsLogon.getErrorMessage()), null, Locale.getDefault());
-            return ResponseEntity.ok(failureResponse);
-        }
-
-        final String sessionId = svRsLogon.getData().sessionId();
-        ServiceResult<SendResponseDto> srRsSend;
-
-        try {
-            // 2. transform → sign → CDATA wrap → send
-            FinancialTransactionRequest transactionRequest = new FinancialTransactionRequest(sessionId, request.getData().transaction());
-            srRsSend = gwIntegrationService.performSendFinancialTransaction(transactionRequest);
-        } finally {
-            // 3. logout
-            gwIntegrationService.performLogout(sessionId);
-        }
+        String sessionId = sessionManager.getSession();
+        FinancialTransactionRequest transactionRequest = new FinancialTransactionRequest(sessionId, request.getData().transaction());
+        ServiceResult<SendResponseDto> srRsSend = gwIntegrationService.performSendFinancialTransaction(transactionRequest);
 
         ApiResponse<SendResponseDto> finalResponse = srRsSend.isSuccess()
                 ? responseBuilder.buildSuccessResponse(srRsSend.getData(), null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(srRsSend, null, Locale.getDefault());
 
-        log.info("< Final response: {}", finalResponse);
-        log.info("<<< END send request <<<");
+        log.info("<<< END send <<<");
         return ResponseEntity.ok(finalResponse);
     }
 
     @PostMapping("/send-ack-nak")
     public ResponseEntity<ApiResponse<Void>> sendAckNak(@Valid @RequestBody ApiRequest<SendAckNakRequest> request) {
         log.info(">>> START sendAckNak >>>");
-        log.info("> request body: {}", request);
 
         if (request.getData() == null) {
             ApiResponse<Void> finalResponse = responseBuilder.buildFailureResponse(
@@ -152,15 +131,13 @@ public class GwIntegrationController {
                 ? responseBuilder.buildSuccessResponse(null, null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
 
-        log.info("< Final response: {}", finalResponse);
-        log.info("<<< END sendAckNak request <<<");
+        log.info("<<< END sendAckNak <<<");
         return ResponseEntity.ok(finalResponse);
     }
 
     @PostMapping("/financial-transaction")
     public ResponseEntity<ApiResponse<SendResponseDto>> financialTransaction(@Valid @RequestBody ApiRequest<FinancialTransactionRequest> request) {
         log.info(">>> START financialTransaction >>>");
-        log.info("> request body: {}", request);
 
         if (request.getData() == null) {
             ApiResponse<SendResponseDto> finalResponse = responseBuilder.buildFailureResponse(
@@ -168,35 +145,15 @@ public class GwIntegrationController {
             return ResponseEntity.badRequest().body(finalResponse);
         }
 
-        // 1. get logon session ID
-        log.info("1. get session ID");
-        ServiceResult<LogonResponseDto> svRsLogon = gwIntegrationService.performLogon();
-        if (!svRsLogon.isSuccess()) {
-            ApiResponse<SendResponseDto> failureResponse = responseBuilder.buildFailureResponse(
-                    ServiceResult.failure(svRsLogon.getErrorCode(), svRsLogon.getErrorMessage()), null, Locale.getDefault());
-            return ResponseEntity.ok(failureResponse);
-        }
-
-        final String sessionId = svRsLogon.getData().sessionId();
-        ServiceResult<SendResponseDto> srRsTransaction;
-
-        try {
-            // 2. perform financial transaction
-            log.info("2. set session ID and perform send");
-            FinancialTransactionRequest transactionRequest = new FinancialTransactionRequest(sessionId, request.getData().transaction());
-            srRsTransaction = gwIntegrationService.performFinancialTransaction(transactionRequest);
-        } finally {
-            // 3. logout session ID
-            log.info("3. finally destroy session");
-            gwIntegrationService.performLogout(sessionId);
-        }
+        String sessionId = sessionManager.getSession();
+        FinancialTransactionRequest transactionRequest = new FinancialTransactionRequest(sessionId, request.getData().transaction());
+        ServiceResult<SendResponseDto> srRsTransaction = gwIntegrationService.performFinancialTransaction(transactionRequest);
 
         ApiResponse<SendResponseDto> finalResponse = srRsTransaction.isSuccess()
                 ? responseBuilder.buildSuccessResponse(srRsTransaction.getData(), null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(srRsTransaction, null, Locale.getDefault());
 
-        log.info("< Final response: {}", finalResponse);
-        log.info("<<< END financialTransaction request <<<");
+        log.info("<<< END financialTransaction <<<");
         return ResponseEntity.ok(finalResponse);
     }
 }

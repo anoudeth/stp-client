@@ -3,6 +3,8 @@ package com.noh.stpclient.service;
 import com.noh.stpclient.exception.GatewayIntegrationException;
 import com.noh.stpclient.model.ServiceResult;
 import com.noh.stpclient.model.xml.DataPDU;
+import com.noh.stpclient.model.xml.GetUpdatesResponse;
+import com.noh.stpclient.model.xml.GetUpdatesResponse.ParamsMtMsg;
 import com.noh.stpclient.model.xml.LogonResponse;
 import com.noh.stpclient.model.xml.LogoutResponse;
 import com.noh.stpclient.model.xml.Send;
@@ -32,8 +34,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.StringWriter;
-
-import jakarta.xml.bind.JAXBException;
+import java.util.List;
 
 /**
  * Service layer for Gateway Integration.
@@ -46,6 +47,7 @@ public class GwIntegrationService {
     private final GWClientMuRemote soapClient;
     private final CryptoManager cryptoManager;
     private final DataPDUTransformer dataPDUTransformer;
+    private final SessionManager sessionManager;
 
     @Value("${stp.soap.username}")
     private String stpUsername;
@@ -57,21 +59,21 @@ public class GwIntegrationService {
     public GwIntegrationService(GWClientMuRemote soapClient,
                                 CryptoManager cryptoManager,
                                 DataPDUTransformer dataPDUTransformer,
+                                SessionManager sessionManager,
                                 @Value("${stp.soap.username}") String stpUsername,
                                 @Value("${stp.soap.password}") String stpPassword,
                                 @Value("${stp.soap.rtgs-receiver}") String rtgsMsgReceiver) {
         this.soapClient = soapClient;
         this.cryptoManager = cryptoManager;
         this.dataPDUTransformer = dataPDUTransformer;
+        this.sessionManager = sessionManager;
         this.stpUsername = stpUsername;
         this.stpPassword = stpPassword;
         this.rtgsMsgReceiver = rtgsMsgReceiver;
     }
 
     public ServiceResult<LogonResponseDto> performLogon() {
-
         try {
-            // sign password
             String signedPassword = cryptoManager.signValue(this.stpPassword);
             log.info("Signed Password: {}", signedPassword);
 
@@ -111,7 +113,10 @@ public class GwIntegrationService {
     public ServiceResult<Void> performGetUpdates(String sessionId) {
         Assert.hasText(sessionId, "Session ID must not be empty");
         try {
-            soapClient.getUpdates(sessionId);
+            GetUpdatesResponse response = soapClient.getUpdates(sessionId);
+            List<ParamsMtMsg> items = (response == null || response.getItems() == null)
+                    ? List.of() : response.getItems();
+            log.info("GetUpdates returned {} message(s) for session: {}", items.size(), sessionId);
             return ServiceResult.success(null);
         } catch (GatewayIntegrationException e) {
             return ServiceResult.failure(e.getCode(), e.getDescription());
@@ -176,13 +181,8 @@ public class GwIntegrationService {
         Assert.hasText(request.datetime(), "Datetime must not be empty");
         Assert.hasText(request.mir(), "MIR must not be empty");
 
-        ServiceResult<LogonResponseDto> logonResult = performLogon();
-        if (!logonResult.isSuccess()) {
-            return ServiceResult.failure(logonResult.getErrorCode(), logonResult.getErrorMessage());
-        }
-        String sessionId = logonResult.getData().sessionId();
-
         try {
+            String sessionId = sessionManager.getSession();
             SendResponseData data = new SendResponseData();
             data.setType(request.type());
             data.setDatetime(request.datetime());
@@ -194,8 +194,6 @@ public class GwIntegrationService {
         } catch (Exception e) {
             log.error("SendAckNak failed for mir: {}", request.mir(), e);
             return ServiceResult.failure("GW-999", "Gateway SendAckNak Failed");
-        } finally {
-            performLogout(sessionId);
         }
     }
 

@@ -6,6 +6,14 @@ stp:
     password: lbb@2026
     rtgs-receiver: LPDRLALAXATS
 
+  session:
+    validity-seconds: 55  # 5s buffer before 60s gateway TTL
+
+  polling:
+    enabled: true
+    interval-ms: 5000       # delay between end of one poll and start of next
+    initial-delay-ms: 10000 # wait before first poll after startup
+
 ks:
   type: PKCS12
   pass: 2wsx@WSX
