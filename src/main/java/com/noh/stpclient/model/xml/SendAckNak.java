@@ -4,16 +4,18 @@ import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlType;
 import lombok.Data;
 
 @Data
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "sendAckNak", namespace = "http://integration.gwclient.smallsystems.cma.se/")
+@XmlRootElement(name = "sendACKNAK", namespace = "http://integration.gwclient.smallsystems.cma.se/")
+@XmlType(name = "", propOrder = {"sessionId", "data"})
 public class SendAckNak {
 
-    @XmlElement(name = "message_id", required = true)
-    private String messageId;
+    @XmlElement(name = "session_id", required = true)
+    private String sessionId;
 
-    @XmlElement(name = "is_ack", required = true)
-    private boolean isAck;
+    @XmlElement(required = true)
+    private SendResponseData data;
 }
