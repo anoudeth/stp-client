@@ -268,6 +268,7 @@ public class DataPDUTransformer {
         JAXBContext jaxbContext = JAXBContext.newInstance(DataPDU.class);
         Marshaller marshaller = jaxbContext.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+        marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
         
         StringWriter writer = new StringWriter();
         marshaller.marshal(dataPDU, writer);

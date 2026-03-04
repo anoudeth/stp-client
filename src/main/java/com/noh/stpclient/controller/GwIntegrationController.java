@@ -97,12 +97,12 @@ public class GwIntegrationController {
     }
 
     @PostMapping("/send")
-    public ResponseEntity<ApiResponse<String>> send(@Valid @RequestBody ApiRequest<FinancialTransactionRequest> request) {
+    public ResponseEntity<ApiResponse<SendResponseDto>> send(@Valid @RequestBody ApiRequest<FinancialTransactionRequest> request) {
         log.info(">>> START send >>>");
         log.info("> request body: {}", request);
 
         if (request.getData() == null) {
-            ApiResponse<String> finalResponse = responseBuilder.buildFailureResponse(
+            ApiResponse<SendResponseDto> finalResponse = responseBuilder.buildFailureResponse(
                     ServiceResult.failure("VALIDATION-001", "Request data cannot be null"), null, Locale.getDefault());
             return ResponseEntity.badRequest().body(finalResponse);
         }
@@ -110,13 +110,13 @@ public class GwIntegrationController {
         // 1. logon
         ServiceResult<LogonResponseDto> svRsLogon = gwIntegrationService.performLogon();
         if (!svRsLogon.isSuccess()) {
-            ApiResponse<String> failureResponse = responseBuilder.buildFailureResponse(
+            ApiResponse<SendResponseDto> failureResponse = responseBuilder.buildFailureResponse(
                     ServiceResult.failure(svRsLogon.getErrorCode(), svRsLogon.getErrorMessage()), null, Locale.getDefault());
             return ResponseEntity.ok(failureResponse);
         }
 
         final String sessionId = svRsLogon.getData().sessionId();
-        ServiceResult<String> srRsSend;
+        ServiceResult<SendResponseDto> srRsSend;
 
         try {
             // 2. transform → sign → CDATA wrap → send
@@ -127,7 +127,7 @@ public class GwIntegrationController {
             gwIntegrationService.performLogout(sessionId);
         }
 
-        ApiResponse<String> finalResponse = srRsSend.isSuccess()
+        ApiResponse<SendResponseDto> finalResponse = srRsSend.isSuccess()
                 ? responseBuilder.buildSuccessResponse(srRsSend.getData(), null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(srRsSend, null, Locale.getDefault());
 
@@ -158,12 +158,12 @@ public class GwIntegrationController {
     }
 
     @PostMapping("/financial-transaction")
-    public ResponseEntity<ApiResponse<String>> financialTransaction(@Valid @RequestBody ApiRequest<FinancialTransactionRequest> request) {
+    public ResponseEntity<ApiResponse<SendResponseDto>> financialTransaction(@Valid @RequestBody ApiRequest<FinancialTransactionRequest> request) {
         log.info(">>> START financialTransaction >>>");
         log.info("> request body: {}", request);
 
         if (request.getData() == null) {
-            ApiResponse<String> finalResponse = responseBuilder.buildFailureResponse(
+            ApiResponse<SendResponseDto> finalResponse = responseBuilder.buildFailureResponse(
                     ServiceResult.failure("VALIDATION-001", "Request data cannot be null"), null, Locale.getDefault());
             return ResponseEntity.badRequest().body(finalResponse);
         }
@@ -172,17 +172,16 @@ public class GwIntegrationController {
         log.info("1. get session ID");
         ServiceResult<LogonResponseDto> svRsLogon = gwIntegrationService.performLogon();
         if (!svRsLogon.isSuccess()) {
-            ApiResponse<String> failureResponse = responseBuilder.buildFailureResponse(
+            ApiResponse<SendResponseDto> failureResponse = responseBuilder.buildFailureResponse(
                     ServiceResult.failure(svRsLogon.getErrorCode(), svRsLogon.getErrorMessage()), null, Locale.getDefault());
             return ResponseEntity.ok(failureResponse);
         }
 
         final String sessionId = svRsLogon.getData().sessionId();
-        ServiceResult<String> srRsTransaction;
+        ServiceResult<SendResponseDto> srRsTransaction;
 
         try {
             // 2. perform financial transaction
-            // 2.1 set session ID
             log.info("2. set session ID and perform send");
             FinancialTransactionRequest transactionRequest = new FinancialTransactionRequest(sessionId, request.getData().transaction());
             srRsTransaction = gwIntegrationService.performFinancialTransaction(transactionRequest);
@@ -191,8 +190,8 @@ public class GwIntegrationController {
             log.info("3. finally destroy session");
             gwIntegrationService.performLogout(sessionId);
         }
-        
-        ApiResponse<String> finalResponse = srRsTransaction.isSuccess()
+
+        ApiResponse<SendResponseDto> finalResponse = srRsTransaction.isSuccess()
                 ? responseBuilder.buildSuccessResponse(srRsTransaction.getData(), null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(srRsTransaction, null, Locale.getDefault());
 

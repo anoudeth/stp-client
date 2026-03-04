@@ -183,7 +183,7 @@ public class GwIntegrationService {
         }
     }
 
-    public ServiceResult<String> performSendFinancialTransaction(FinancialTransactionRequest request) {
+    public ServiceResult<SendResponseDto> performSendFinancialTransaction(FinancialTransactionRequest request) {
         Assert.notNull(request, "Financial transaction request cannot be null");
         Assert.hasText(request.sessionId(), "Session ID must not be empty");
         Assert.notNull(request.transaction(), "Transaction data cannot be null");
@@ -220,7 +220,7 @@ public class GwIntegrationService {
                 return ServiceResult.failure(data.getCode(), data.getDescription());
             }
 
-            return ServiceResult.success(sendXml);
+            return ServiceResult.success(SendResponseDto.from(data));
 
         } catch (JAXBException e) {
             log.error("XML marshaling failed for financial transaction", e);
@@ -271,24 +271,18 @@ public class GwIntegrationService {
         return sw.toString();
     }
 
-    public ServiceResult<String> performFinancialTransaction(FinancialTransactionRequest request) {
+    public ServiceResult<SendResponseDto> performFinancialTransaction(FinancialTransactionRequest request) {
         Assert.notNull(request, "Financial transaction request cannot be null");
         Assert.hasText(request.sessionId(), "Session ID must not be empty");
         Assert.notNull(request.transaction(), "Transaction data cannot be null");
 
         try {
-            // Transform transaction data to DataPDU format
             DataPDU dataPDU = dataPDUTransformer.transformToDataPDU(request);
-            
-            // Marshal DataPDU to XML string
             String xmlContent = dataPDUTransformer.marshalToXml(dataPDU);
-
-            // Sign the <Document> element and embed <ds:Signature> inside <AppHdr/Sgntr>
             String signedXmlContent = cryptoManager.signXml(xmlContent);
 
             log.info("Generated signed XML for financial transaction: {}", signedXmlContent);
 
-            // Create Send request with the XML content
             Send soapRequest = new Send();
             soapRequest.setSessionId(request.sessionId());
             Send.Message soapMessage = new Send.Message();
@@ -301,17 +295,17 @@ public class GwIntegrationService {
             soapRequest.setMessage(soapMessage);
 
             SendResponse response = soapClient.send(soapRequest);
-            
+
             if (response == null || response.getData() == null) {
                 return ServiceResult.failure("GW-002", "Received empty response from Gateway");
             }
-            
+
             SendResponseData data = response.getData();
             if ("NAK".equals(data.getType())) {
                 return ServiceResult.failure(data.getCode(), data.getDescription());
             }
 
-            return ServiceResult.success(signedXmlContent);
+            return ServiceResult.success(SendResponseDto.from(data));
         } catch (JAXBException e) {
             log.error("XML marshaling failed for financial transaction", e);
             return ServiceResult.failure("GW-003", "XML transformation failed: " + e.getMessage());

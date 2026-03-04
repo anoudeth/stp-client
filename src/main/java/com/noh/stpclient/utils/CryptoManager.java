@@ -151,8 +151,9 @@ public class CryptoManager {
         org.w3c.dom.Document signedDoc = signDocument(doc, certToSign, privateKey);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        TransformerFactory.newInstance().newTransformer().transform(
-                new DOMSource(signedDoc), new StreamResult(out));
+        Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+        transformer.transform(new DOMSource(signedDoc), new StreamResult(out));
         return out.toString(StandardCharsets.UTF_8);
     }
 
