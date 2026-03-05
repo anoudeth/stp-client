@@ -9,8 +9,8 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.util.Objects;
 
 /**
@@ -99,7 +99,7 @@ public class AuditRepository {
         }
     }
 
-    private java.sql.Clob toClob(OracleConnection conn, String value) throws Exception {
+    private java.sql.Clob toClob(OracleConnection conn, String value) throws SQLException {
         java.sql.Clob clob = conn.createClob();
         clob.setString(1, value != null ? value : "");
         return clob;
