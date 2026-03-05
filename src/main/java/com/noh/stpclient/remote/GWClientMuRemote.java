@@ -1,6 +1,7 @@
 package com.noh.stpclient.remote;
 
 import com.noh.stpclient.model.xml.GetUpdates;
+import com.noh.stpclient.model.xml.GetUpdatesResponse;
 import com.noh.stpclient.model.xml.Logon;
 import com.noh.stpclient.model.xml.LogonResponse;
 import com.noh.stpclient.model.xml.Logout;
@@ -37,11 +38,11 @@ public class GWClientMuRemote extends WebServiceGatewaySupport {
         return (LogoutResponse) getWebServiceTemplate().marshalSendAndReceive(request);
     }
 
-    public void getUpdates(String sessionId) {
+    public GetUpdatesResponse getUpdates(String sessionId) {
         log.info(":: Initiating SOAP GetUpdates for session: {}", sessionId);
         final GetUpdates request = new GetUpdates();
         request.setSessionId(sessionId);
-        getWebServiceTemplate().marshalSendAndReceive(request);
+        return (GetUpdatesResponse) getWebServiceTemplate().marshalSendAndReceive(request);
     }
 
     public SendResponse send(Send request) {

@@ -7,13 +7,14 @@ import com.noh.stpclient.model.ServiceResult;
 import com.noh.stpclient.service.GwIntegrationService;
 import com.noh.stpclient.utils.ApiResponseBuilder;
 import com.noh.stpclient.web.dto.FinancialTransactionRequest;
-import com.noh.stpclient.web.dto.GetUpdatesRequest;
+import com.noh.stpclient.web.dto.GetUpdatesResponseDto;
 import com.noh.stpclient.web.dto.LogonRequest;
 import com.noh.stpclient.web.dto.LogonResponseDto;
 import com.noh.stpclient.web.dto.LogoutRequest;
 import com.noh.stpclient.web.dto.SendResponseDto;
 import com.noh.stpclient.web.dto.SendAckNakRequest;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -76,19 +77,31 @@ public class GwIntegrationController {
     }
 
     @PostMapping("/get-updates")
-    public ResponseEntity<ApiResponse<Void>> getUpdates(@Valid @RequestBody ApiRequest<GetUpdatesRequest> request) {
+    public ResponseEntity<ApiResponse<List<GetUpdatesResponseDto>>> getUpdates(@Valid @RequestBody ApiRequest<Void> request) {
         log.info(">>> START getUpdates >>>");
         log.info("> request body: {}", request);
 
-        if (request.getData() == null) {
-            ApiResponse<Void> finalResponse = responseBuilder.buildFailureResponse(
-                    ServiceResult.failure("VALIDATION-001", "Request data cannot be null"), null, Locale.getDefault());
-            return ResponseEntity.badRequest().body(finalResponse);
+        // 1. logon
+        ServiceResult<LogonResponseDto> svRsLogon = gwIntegrationService.performLogon();
+        if (!svRsLogon.isSuccess()) {
+            ApiResponse<List<GetUpdatesResponseDto>> failureResponse = responseBuilder.buildFailureResponse(
+                    ServiceResult.failure(svRsLogon.getErrorCode(), svRsLogon.getErrorMessage()), null, Locale.getDefault());
+            return ResponseEntity.ok(failureResponse);
         }
 
-        ServiceResult<Void> serviceResult = gwIntegrationService.performGetUpdates(request.getData().sessionId());
-        ApiResponse<Void> finalResponse = serviceResult.isSuccess()
-                ? responseBuilder.buildSuccessResponse(null, null, Locale.getDefault())
+        final String sessionId = svRsLogon.getData().sessionId();
+        ServiceResult<List<GetUpdatesResponseDto>> serviceResult;
+
+        try {
+            // 2. get updates
+            serviceResult = gwIntegrationService.performGetUpdates(sessionId);
+        } finally {
+            // 3. logout
+            gwIntegrationService.performLogout(sessionId);
+        }
+
+        ApiResponse<List<GetUpdatesResponseDto>> finalResponse = serviceResult.isSuccess()
+                ? responseBuilder.buildSuccessResponse(serviceResult.getData(), null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
 
         log.info("< Final response: {}", finalResponse);

@@ -3,6 +3,7 @@ package com.noh.stpclient.service;
 import com.noh.stpclient.exception.GatewayIntegrationException;
 import com.noh.stpclient.model.ServiceResult;
 import com.noh.stpclient.model.xml.DataPDU;
+import com.noh.stpclient.model.xml.GetUpdatesResponse;
 import com.noh.stpclient.model.xml.LogonResponse;
 import com.noh.stpclient.model.xml.LogoutResponse;
 import com.noh.stpclient.model.xml.Send;
@@ -11,9 +12,13 @@ import com.noh.stpclient.model.xml.SendResponseData;
 import com.noh.stpclient.remote.GWClientMuRemote;
 import com.noh.stpclient.utils.CryptoManager;
 import com.noh.stpclient.web.dto.FinancialTransactionRequest;
+import com.noh.stpclient.web.dto.GetUpdatesResponseDto;
 import com.noh.stpclient.web.dto.LogonResponseDto;
 import com.noh.stpclient.web.dto.SendRequest;
 import com.noh.stpclient.web.dto.SendResponseDto;
+import java.util.Collections;
+import java.util.List;
+
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Marshaller;
@@ -108,11 +113,17 @@ public class GwIntegrationService {
         }
     }
 
-    public ServiceResult<Void> performGetUpdates(String sessionId) {
+    public ServiceResult<List<GetUpdatesResponseDto>> performGetUpdates(String sessionId) {
         Assert.hasText(sessionId, "Session ID must not be empty");
         try {
-            soapClient.getUpdates(sessionId);
-            return ServiceResult.success(null);
+            GetUpdatesResponse response = soapClient.getUpdates(sessionId);
+            if (response == null || response.getItems() == null) {
+                return ServiceResult.success(Collections.emptyList());
+            }
+            List<GetUpdatesResponseDto> items = response.getItems().stream()
+                    .map(GetUpdatesResponseDto::from)
+                    .toList();
+            return ServiceResult.success(items);
         } catch (GatewayIntegrationException e) {
             return ServiceResult.failure(e.getCode(), e.getDescription());
         } catch (Exception e) {
