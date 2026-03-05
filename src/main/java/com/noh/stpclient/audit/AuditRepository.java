@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -24,6 +25,10 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Slf4j
 public class AuditRepository {
+
+    private static final String STATUS_PENDING = "PENDING";
+    private static final String STATUS_SUCCESS = "SUCCESS";
+    private static final String STATUS_FAILURE = "FAILURE";
 
     private static final String INSERT_AUDIT = """
             INSERT INTO STP_AUDIT_LOG
@@ -48,7 +53,7 @@ public class AuditRepository {
     private static final String INSERT_PENDING_SEND_AUDIT = """
             INSERT INTO STP_AUDIT_LOG
                 (OPERATION, SESSION_ID, JSON_REQUEST, STATUS, CREATED_AT)
-            VALUES ('SEND', ?, ?, 'PENDING', ?)
+            VALUES (?, ?, ?, ?, ?)
             """;
 
     private static final String INSERT_TXN_REQUEST_ONLY = """
@@ -59,7 +64,7 @@ public class AuditRepository {
                  DEBTOR_NAME, DEBTOR_ACCOUNT, DEBTOR_AGENT_ACCOUNT,
                  CREDITOR_NAME, CREDITOR_ACCOUNT, CREDITOR_AGENT_ACCOUNT,
                  DEBTOR_ADDRESS_LINES, INSTR_FOR_NXT_AGT, REMITTANCE_INFO)
-            VALUES (?,'PENDING',?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """;
 
     private static final String UPDATE_SEND_AUDIT_RESULT = """
@@ -80,17 +85,22 @@ public class AuditRepository {
 
     /**
      * Inserts a PENDING audit row + request-only txn detail row before the SOAP call.
+     * Both inserts are wrapped in a transaction — if the txn detail insert fails,
+     * the audit log row is rolled back.
      * Returns the generated STP_AUDIT_LOG ID for use in {@link #updateSendResult}.
      */
+    @Transactional
     public long insertPendingSend(String sessionId, String jsonRequest,
                                   AuditLog.TransactionDetail txDetail) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             OracleConnection oc = connection.unwrap(OracleConnection.class);
             PreparedStatement ps = connection.prepareStatement(INSERT_PENDING_SEND_AUDIT, new String[]{"ID"});
-            ps.setString   (1, sessionId);
-            ps.setClob     (2, toClob(oc, jsonRequest));
-            ps.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+            ps.setString   (1, AuditLog.Operation.SEND.name());
+            ps.setString   (2, sessionId);
+            ps.setClob     (3, toClob(oc, jsonRequest));
+            ps.setString   (4, STATUS_PENDING);
+            ps.setTimestamp(5, Timestamp.valueOf(LocalDateTime.now()));
             return ps;
         }, keyHolder);
 
@@ -99,6 +109,7 @@ public class AuditRepository {
         if (txDetail != null) {
             jdbcTemplate.update(INSERT_TXN_REQUEST_ONLY,
                     auditLogId,
+                    STATUS_PENDING,
                     txDetail.getMsgId(),
                     txDetail.getMsgSequence(),
                     txDetail.getBusinessMsgId(),
@@ -127,15 +138,19 @@ public class AuditRepository {
     /**
      * Updates the PENDING audit row to SUCCESS/FAILURE and populates response fields
      * in STP_SEND_TXN_DETAIL after the SOAP call completes.
+     * Both updates are wrapped in a transaction.
      */
+    @Transactional
     public void updateSendResult(long auditLogId, boolean success,
                                  String errorCode, String errorMessage,
                                  String jsonResponse, String soapRequest, String soapResponse,
                                  AuditLog.TransactionDetail responseFields) {
+        String status = success ? STATUS_SUCCESS : STATUS_FAILURE;
+
         jdbcTemplate.update(connection -> {
             OracleConnection oc = connection.unwrap(OracleConnection.class);
             PreparedStatement ps = connection.prepareStatement(UPDATE_SEND_AUDIT_RESULT);
-            ps.setString(1, success ? "SUCCESS" : "FAILURE");
+            ps.setString(1, status);
             ps.setClob  (2, toClob(oc, jsonResponse));
             ps.setClob  (3, toClob(oc, soapRequest));
             ps.setClob  (4, toClob(oc, soapResponse));
@@ -145,19 +160,20 @@ public class AuditRepository {
             return ps;
         });
 
-        if (responseFields != null) {
-            jdbcTemplate.update(UPDATE_TXN_RESPONSE,
-                    success ? "SUCCESS" : "FAILURE",
-                    responseFields.getResCode(),
-                    truncate(responseFields.getResMessage(), 500),
-                    responseFields.getResStatus(),
-                    responseFields.getResponseType(),
-                    responseFields.getResponseDatetime(),
-                    responseFields.getResponseMir(),
-                    responseFields.getResponseRef(),
-                    auditLogId
-            );
-        }
+        // Always update txn detail STATUS — even when responseFields is null
+        String resCode    = responseFields != null ? responseFields.getResCode()        : null;
+        String resMessage = responseFields != null ? truncate(responseFields.getResMessage(), 500) : null;
+        String resStatus  = responseFields != null ? responseFields.getResStatus()      : null;
+        String respType   = responseFields != null ? responseFields.getResponseType()   : null;
+        String respDt     = responseFields != null ? responseFields.getResponseDatetime(): null;
+        String respMir    = responseFields != null ? responseFields.getResponseMir()    : null;
+        String respRef    = responseFields != null ? responseFields.getResponseRef()    : null;
+
+        jdbcTemplate.update(UPDATE_TXN_RESPONSE,
+                status, resCode, resMessage, resStatus,
+                respType, respDt, respMir, respRef,
+                auditLogId
+        );
     }
 
     public void save(AuditLog auditLog) {
@@ -173,7 +189,7 @@ public class AuditRepository {
                 ps.setClob     (4,  toClob(oc, auditLog.getJsonResponse()));
                 ps.setClob     (5,  toClob(oc, auditLog.getSoapRequest()));
                 ps.setClob     (6,  toClob(oc, auditLog.getSoapResponse()));
-                ps.setString   (7,  auditLog.isSuccess() ? "SUCCESS" : "FAILURE");
+                ps.setString   (7,  auditLog.isSuccess() ? STATUS_SUCCESS : STATUS_FAILURE);
                 ps.setString   (8,  auditLog.getErrorCode());
                 ps.setString   (9,  truncate(auditLog.getErrorMessage(), 500));
                 ps.setTimestamp(10, Timestamp.valueOf(auditLog.getCreatedAt()));
@@ -186,7 +202,7 @@ public class AuditRepository {
                 AuditLog.TransactionDetail tx = auditLog.getTxnDetail();
                 jdbcTemplate.update(INSERT_TXN,
                         auditLogId,
-                        auditLog.isSuccess() ? "SUCCESS" : "FAILURE",
+                        auditLog.isSuccess() ? STATUS_SUCCESS : STATUS_FAILURE,
                         tx.getMsgId(),
                         tx.getMsgSequence(),
                         tx.getBusinessMsgId(),
@@ -224,8 +240,9 @@ public class AuditRepository {
     }
 
     private java.sql.Clob toClob(OracleConnection conn, String value) throws SQLException {
+        if (value == null) return null;
         java.sql.Clob clob = conn.createClob();
-        clob.setString(1, value != null ? value : "");
+        clob.setString(1, value);
         return clob;
     }
 
