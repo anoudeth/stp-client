@@ -38,8 +38,10 @@ public class AuditRepository {
                  CURRENCY, AMOUNT, SETTLEMENT_DATE,
                  DEBTOR_NAME, DEBTOR_ACCOUNT, DEBTOR_AGENT_ACCOUNT,
                  CREDITOR_NAME, CREDITOR_ACCOUNT, CREDITOR_AGENT_ACCOUNT,
-                 DEBTOR_ADDRESS_LINES, INSTR_FOR_NXT_AGT, REMITTANCE_INFO)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                 DEBTOR_ADDRESS_LINES, INSTR_FOR_NXT_AGT, REMITTANCE_INFO,
+                 RES_CODE, RES_MESSAGE, RES_STATUS,
+                 RESPONSE_TYPE, RESPONSE_DATETIME, RESPONSE_MIR, RESPONSE_REF)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """;
 
     private final JdbcTemplate jdbcTemplate;
@@ -89,7 +91,14 @@ public class AuditRepository {
                         tx.getCreditorAgentAccount(),
                         truncate(tx.getDebtorAddressLines(), 500),
                         truncate(tx.getInstrForNxtAgt(), 500),
-                        truncate(tx.getRemittanceInfo(), 500)
+                        truncate(tx.getRemittanceInfo(), 500),
+                        tx.getResCode(),
+                        truncate(tx.getResMessage(), 500),
+                        tx.getResStatus(),
+                        tx.getResponseType(),
+                        tx.getResponseDatetime(),
+                        tx.getResponseMir(),
+                        tx.getResponseRef()
                 );
             }
         } catch (Exception e) {

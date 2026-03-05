@@ -60,5 +60,14 @@ public class AuditLog {
         private final String     debtorAddressLines;
         private final String     instrForNxtAgt;
         private final String     remittanceInfo;
+
+        // Gateway response fields (ACK/NAK)
+        private final String     resCode;
+        private final String     resMessage;
+        private final String     resStatus;
+        private final String     responseType;
+        private final String     responseDatetime;
+        private final String     responseMir;
+        private final String     responseRef;
     }
 }

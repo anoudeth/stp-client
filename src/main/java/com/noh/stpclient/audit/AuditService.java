@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.noh.stpclient.config.interceptor.SoapPayloadLoggingInterceptor;
 import com.noh.stpclient.model.ServiceResult;
 import com.noh.stpclient.web.dto.FinancialTransactionRequest;
+import com.noh.stpclient.web.dto.SendRequest;
+import com.noh.stpclient.web.dto.SendResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -51,7 +53,22 @@ public class AuditService {
 
         // Extract transaction detail for SEND operations
         AuditLog.TransactionDetail txDetail = null;
-        if (request instanceof FinancialTransactionRequest ftr && ftr.transaction() != null) {
+        if (request instanceof SendRequest sr) {
+            SendResponseDto resp = result.getData() instanceof SendResponseDto dto ? dto : null;
+            boolean isSuccessCode = resp != null && "0000".equals(resp.code());
+            txDetail = AuditLog.TransactionDetail.builder()
+                    .senderBic(sr.message().msgSender())
+                    .receiverBic(sr.message().msgReceiver())
+                    .msgSequence(sr.message().msgSequence())
+                    .resCode(resp != null ? resp.code() : null)
+                    .resMessage(resp != null ? resp.description() : null)
+                    .resStatus(resp != null ? resp.info() : null)
+                    .responseType(isSuccessCode ? resp.type() : null)
+                    .responseDatetime(isSuccessCode ? resp.datetime() : null)
+                    .responseMir(isSuccessCode ? resp.mir() : null)
+                    .responseRef(isSuccessCode ? resp.ref() : null)
+                    .build();
+        } else if (request instanceof FinancialTransactionRequest ftr && ftr.transaction() != null) {
             var tx = ftr.transaction();
             txDetail = AuditLog.TransactionDetail.builder()
                     .msgId(tx.messageId())
