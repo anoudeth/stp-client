@@ -10,6 +10,8 @@ import com.noh.stpclient.web.dto.SendRequest;
 import com.noh.stpclient.web.dto.SendResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +21,7 @@ import org.springframework.stereotype.Service;
  * <p>Flow:
  * <ol>
  *   <li>{@link #record} reads the SOAP XML ThreadLocal and clears it synchronously
- *       on the calling thread, then fires an async save.
+ *       on the calling thread, then fires an async save via the Spring proxy.
  *   <li>{@link #persistAsync} runs on Spring's task executor, builds the AuditLog,
  *       and delegates to AuditRepository — never blocking the original request.
  * </ol>
@@ -34,6 +36,12 @@ public class AuditService {
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     private final AuditRepository auditRepository;
+
+    // Self-injection via proxy: calling persistAsync() on 'this' bypasses Spring AOP,
+    // so @Async would not apply. Using the proxy reference ensures the async behaviour works.
+    @Lazy
+    @Autowired
+    private AuditService self;
 
     /**
      * Called synchronously by GwIntegrationService immediately after each audited operation.
@@ -95,8 +103,8 @@ public class AuditService {
                     .build();
         }
 
-        // Fire-and-forget: all values passed as params — no ThreadLocal dependency in async thread
-        persistAsync(operation, sessionId, jsonRequest, jsonResponse,
+        // Fire-and-forget: call through proxy so @Async is applied — no ThreadLocal dependency in async thread
+        self.persistAsync(operation, sessionId, jsonRequest, jsonResponse,
                 soapReq, soapRes,
                 result.isSuccess(), result.getErrorCode(), result.getErrorMessage(),
                 txDetail);
@@ -137,6 +145,117 @@ public class AuditService {
         } catch (Exception e) {
             log.error("Async audit persist failed for operation [{}]: {}", operation, e.getMessage(), e);
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Two-step audit for performSendFinancialTransaction:
+    //   1. recordSendBefore  — synchronous INSERT before SOAP call
+    //   2. recordSendAfter   — reads ThreadLocal then dispatches async UPDATE
+    // -------------------------------------------------------------------------
+
+    /**
+     * Inserts a PENDING audit row + request fields into STP_SEND_TXN_DETAIL before
+     * the SOAP call is made. Returns the generated audit log ID to pass to
+     * {@link #recordSendAfter}.
+     */
+    public long recordSendBefore(String sessionId, FinancialTransactionRequest request) {
+        try {
+            String jsonRequest = toJson(request);
+            AuditLog.TransactionDetail txDetail = buildTxDetailFromRequest(request);
+            return auditRepository.insertPendingSend(sessionId, jsonRequest, txDetail);
+        } catch (Exception e) {
+            log.error("Failed to insert pending send audit for session [{}]: {}", sessionId, e.getMessage(), e);
+            return -1L;
+        }
+    }
+
+    /**
+     * Reads SOAP payloads from the ThreadLocal on the calling thread, then fires an
+     * async UPDATE to fill in the result fields.
+     */
+    public void recordSendAfter(long auditLogId, ServiceResult<?> result) {
+        if (auditLogId < 0) return;
+        // Must read ThreadLocal HERE on the calling thread — @Async runs on a different thread
+        String soapReq = SoapPayloadLoggingInterceptor.getSoapRequestXml();
+        String soapRes = SoapPayloadLoggingInterceptor.getSoapResponseXml();
+        SoapPayloadLoggingInterceptor.clearSoapPayloads();
+
+        String jsonResponse = toJson(result);
+        AuditLog.TransactionDetail responseFields = buildResponseFields(result);
+
+        // Call through proxy so @Async is applied
+        self.persistSendResultAsync(auditLogId, result.isSuccess(),
+                result.getErrorCode(), result.getErrorMessage(),
+                jsonResponse, soapReq, soapRes, responseFields);
+    }
+
+    @Async
+    public void persistSendResultAsync(long auditLogId, boolean success,
+                                       String errorCode, String errorMessage,
+                                       String jsonResponse, String soapRequest, String soapResponse,
+                                       AuditLog.TransactionDetail responseFields) {
+        try {
+            auditRepository.updateSendResult(auditLogId, success, errorCode, errorMessage,
+                    jsonResponse, soapRequest, soapResponse, responseFields);
+        } catch (Exception e) {
+            log.error("Failed to update send audit result for auditLogId [{}]: {}", auditLogId, e.getMessage(), e);
+        }
+    }
+
+    private AuditLog.TransactionDetail buildTxDetailFromRequest(FinancialTransactionRequest request) {
+        if (request == null || request.transaction() == null) return null;
+        var tx = request.transaction();
+        return AuditLog.TransactionDetail.builder()
+                .msgId(tx.messageId())
+                .msgSequence(tx.msgSequence())
+                .businessMsgId(tx.businessMessageId())
+                .senderBic(tx.senderBic())
+                .receiverBic(tx.receiverBic())
+                .instructingAgentBic(tx.instructingAgentBic())
+                .instructedAgentBic(tx.instructedAgentBic())
+                .debtorAgentBic(tx.debtorAgentBic())
+                .currency(tx.currency())
+                .amount(tx.amount())
+                .settlementDate(tx.settlementDate())
+                .debtorName(tx.debtorName())
+                .debtorAccount(tx.debtorAccount())
+                .debtorAgentAccount(tx.debtorAgentAccount())
+                .creditorName(tx.creditorName())
+                .creditorAccount(tx.creditorAccount())
+                .creditorAgentAccount(tx.creditorAgentAccount())
+                .debtorAddressLines(tx.debtorAddressLines() != null
+                        ? String.join("|", tx.debtorAddressLines()) : null)
+                .instrForNxtAgt(tx.instrForNxtAgt())
+                .remittanceInfo(tx.remittanceInformation())
+                .build();
+    }
+
+    private AuditLog.TransactionDetail buildResponseFields(ServiceResult<?> result) {
+        if (result.getData() instanceof SendResponseDto resp) {
+            if (resp.type() != null) {
+                // ACK — save full detail: type, datetime, mir, ref
+                return AuditLog.TransactionDetail.builder()
+                        .resCode(resp.code())
+                        .resMessage(resp.description())
+                        .resStatus(resp.info())
+                        .responseType(resp.type())
+                        .responseDatetime(resp.datetime())
+                        .responseMir(resp.mir())
+                        .responseRef(resp.ref())
+                        .build();
+            }
+            // NAK — save code, description, and info from SOAP response
+            return AuditLog.TransactionDetail.builder()
+                    .resCode(resp.code())
+                    .resMessage(resp.description())
+                    .resStatus(resp.info())
+                    .build();
+        }
+        // Exception / connectivity failure — store error code/message so the row is still updated
+        return AuditLog.TransactionDetail.builder()
+                .resCode(result.getErrorCode())
+                .resMessage(result.getErrorMessage())
+                .build();
     }
 
     private String toJson(Object obj) {

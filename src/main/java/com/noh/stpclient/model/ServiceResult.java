@@ -30,4 +30,13 @@ public class ServiceResult<T> {
                 .errorMessage(errorMessage)
                 .build();
     }
+
+    public static <T> ServiceResult<T> failureWithData(T data, String errorCode, String errorMessage) {
+        return ServiceResult.<T>builder()
+                .success(false)
+                .data(data)
+                .errorCode(errorCode)
+                .errorMessage(errorMessage)
+                .build();
+    }
 }

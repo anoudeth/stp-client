@@ -226,6 +226,9 @@ public class GwIntegrationService {
         Assert.hasText(request.sessionId(), "Session ID must not be empty");
         Assert.notNull(request.transaction(), "Transaction data cannot be null");
 
+        // 1. Insert PENDING audit row + request fields before SOAP call
+        long auditLogId = auditService.recordSendBefore(request.sessionId(), request);
+
         ServiceResult<SendResponseDto> result;
         try {
             DataPDU dataPDU = dataPDUTransformer.transformToDataPDU(request);
@@ -242,18 +245,9 @@ public class GwIntegrationService {
                 result = ServiceResult.failure("GW-002", "Received empty response from Gateway");
             } else {
                 SendResponseData data = response.getData();
-//                try {
-//                    boolean signatureValid = cryptoManager.verifyResponseSignature(data);
-//                    if (!signatureValid) {
-//                        log.warn("Gateway response signature verification FAILED for session: {}", request.sessionId());
-//                    } else {
-//                        log.info("Gateway response signature verified OK for session: {}", request.sessionId());
-//                    }
-//                } catch (Exception e) {
-//                    log.warn("Gateway response signature verification error for session: {}: {}", request.sessionId(), e.getMessage());
-//                }
                 if ("NAK".equals(data.getType())) {
-                    result = ServiceResult.failure(data.getCode(), data.getDescription());
+                    // Keep DTO on failure so audit can capture code, description, and info from SOAP response
+                    result = ServiceResult.failureWithData(SendResponseDto.from(data), data.getCode(), data.getDescription());
                 } else {
                     result = ServiceResult.success(SendResponseDto.from(data));
                 }
@@ -267,7 +261,9 @@ public class GwIntegrationService {
             log.error("Financial transaction send failed for session: {}", request.sessionId(), e);
             result = ServiceResult.failure("GW-999", "Financial transaction send failed");
         }
-        auditService.record(AuditLog.Operation.SEND, request.sessionId(), request, result);
+
+        // 2. Update audit row with result (async — does not block logout)
+        auditService.recordSendAfter(auditLogId, result);
         return result;
     }
 
