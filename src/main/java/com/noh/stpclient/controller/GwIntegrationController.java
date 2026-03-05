@@ -8,6 +8,7 @@ import com.noh.stpclient.service.SessionManager;
 import com.noh.stpclient.utils.ApiResponseBuilder;
 import com.noh.stpclient.web.dto.FinancialTransactionRequest;
 import com.noh.stpclient.web.dto.GetUpdatesRequest;
+import com.noh.stpclient.web.dto.GetUpdatesResponseDto;
 import com.noh.stpclient.web.dto.LogonRequest;
 import com.noh.stpclient.web.dto.LogonResponseDto;
 import com.noh.stpclient.web.dto.LogoutRequest;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Locale;
 
 @RestController
@@ -76,18 +78,18 @@ public class GwIntegrationController {
     }
 
     @PostMapping("/get-updates")
-    public ResponseEntity<ApiResponse<Void>> getUpdates(@Valid @RequestBody ApiRequest<GetUpdatesRequest> request) {
+    public ResponseEntity<ApiResponse<List<GetUpdatesResponseDto>>> getUpdates(@Valid @RequestBody ApiRequest<GetUpdatesRequest> request) {
         log.info(">>> START getUpdates >>>");
 
         if (request.getData() == null) {
-            ApiResponse<Void> finalResponse = responseBuilder.buildFailureResponse(
+            ApiResponse<List<GetUpdatesResponseDto>> finalResponse = responseBuilder.buildFailureResponse(
                     ServiceResult.failure("VALIDATION-001", "Request data cannot be null"), null, Locale.getDefault());
             return ResponseEntity.badRequest().body(finalResponse);
         }
 
-        ServiceResult<Void> serviceResult = gwIntegrationService.performGetUpdates(request.getData().sessionId());
-        ApiResponse<Void> finalResponse = serviceResult.isSuccess()
-                ? responseBuilder.buildSuccessResponse(null, null, Locale.getDefault())
+        ServiceResult<List<GetUpdatesResponseDto>> serviceResult = gwIntegrationService.performGetUpdates(request.getData().sessionId());
+        ApiResponse<List<GetUpdatesResponseDto>> finalResponse = serviceResult.isSuccess()
+                ? responseBuilder.buildSuccessResponse(serviceResult.getData(), null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
 
         log.info("<<< END getUpdates <<<");

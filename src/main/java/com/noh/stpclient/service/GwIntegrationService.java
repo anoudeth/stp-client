@@ -13,6 +13,7 @@ import com.noh.stpclient.model.xml.SendResponseData;
 import com.noh.stpclient.remote.GWClientMuRemote;
 import com.noh.stpclient.utils.CryptoManager;
 import com.noh.stpclient.web.dto.FinancialTransactionRequest;
+import com.noh.stpclient.web.dto.GetUpdatesResponseDto;
 import com.noh.stpclient.web.dto.LogonResponseDto;
 import com.noh.stpclient.web.dto.SendRequest;
 import com.noh.stpclient.web.dto.SendResponseDto;
@@ -110,14 +111,17 @@ public class GwIntegrationService {
         }
     }
 
-    public ServiceResult<Void> performGetUpdates(String sessionId) {
+    public ServiceResult<List<GetUpdatesResponseDto>> performGetUpdates(String sessionId) {
         Assert.hasText(sessionId, "Session ID must not be empty");
         try {
             GetUpdatesResponse response = soapClient.getUpdates(sessionId);
             List<ParamsMtMsg> items = (response == null || response.getItems() == null)
                     ? List.of() : response.getItems();
             log.info("GetUpdates returned {} message(s) for session: {}", items.size(), sessionId);
-            return ServiceResult.success(null);
+            List<GetUpdatesResponseDto> dtos = items.stream()
+                    .map(GetUpdatesResponseDto::from)
+                    .toList();
+            return ServiceResult.success(dtos);
         } catch (GatewayIntegrationException e) {
             return ServiceResult.failure(e.getCode(), e.getDescription());
         } catch (Exception e) {
