@@ -1,5 +1,6 @@
 package com.noh.stpclient.service;
 
+import com.noh.stpclient.exception.GatewayIntegrationException;
 import com.noh.stpclient.model.xml.GetUpdatesResponse;
 import com.noh.stpclient.model.xml.GetUpdatesResponse.ParamsMtMsg;
 import com.noh.stpclient.model.xml.SendResponseData;
@@ -51,7 +52,15 @@ public class InboundPollingService {
         }
         try {
             String sessionId = sessionManager.getSession();
-            GetUpdatesResponse response = soapClient.getUpdates(sessionId);
+            GetUpdatesResponse response;
+            try {
+                response = soapClient.getUpdates(sessionId);
+            } catch (GatewayIntegrationException e) {
+                if (!isSessionFault(e)) throw e;
+                log.warn("[Polling] Session fault on getUpdates — refreshing session and retrying: {}", e.getDescription());
+                sessionId = sessionManager.forceRefresh();
+                response = soapClient.getUpdates(sessionId);
+            }
 
             List<ParamsMtMsg> messages = (response == null || response.getItems() == null)
                     ? List.of() : response.getItems();
@@ -110,5 +119,10 @@ public class InboundPollingService {
         // coreTellerClient.bookInboundTransaction(msg);
         log.info("[Polling] [STUB] Core Teller booking for MIR={}, msgType={}",
                 msg.getMsgNetMir(), msg.getMsgType());
+    }
+
+    private boolean isSessionFault(GatewayIntegrationException e) {
+        String desc = e.getDescription();
+        return desc != null && desc.toLowerCase().contains("session not found");
     }
 }

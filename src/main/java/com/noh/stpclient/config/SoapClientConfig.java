@@ -28,7 +28,8 @@ public class SoapClientConfig {
             com.noh.stpclient.model.xml.LogoutResponse.class,
             com.noh.stpclient.model.xml.GetUpdates.class,
             com.noh.stpclient.model.xml.GetUpdatesResponse.class,
-            com.noh.stpclient.model.xml.SendAckNak.class
+            com.noh.stpclient.model.xml.SendAckNak.class,
+            com.noh.stpclient.model.xml.SendAckNakResponse.class
         );
         return marshaller;
     }
