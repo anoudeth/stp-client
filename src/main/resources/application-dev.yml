@@ -15,3 +15,15 @@ ks:
 gw:
   cert:
     alias: gw-cert  # Import gateway cert into LBBCLALABXXX.pfx with: keytool -importcert -keystore key/LBBCLALABXXX.pfx -storetype PKCS12 -storepass 2wsx@WSX -alias gw-cert -file gateway.cer
+
+spring:
+  datasource:
+    url: jdbc:oracle:thin:@10.10.200.33:1523:bnpldb
+    username: msmartuat
+    password: msmartuat
+    driver-class-name: oracle.jdbc.OracleDriver
+    hikari:
+      pool-name: StpAuditPool
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-test-query: SELECT 1 FROM DUAL

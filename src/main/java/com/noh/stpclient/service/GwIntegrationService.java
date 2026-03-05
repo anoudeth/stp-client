@@ -1,5 +1,7 @@
 package com.noh.stpclient.service;
 
+import com.noh.stpclient.audit.AuditLog;
+import com.noh.stpclient.audit.AuditService;
 import com.noh.stpclient.exception.GatewayIntegrationException;
 import com.noh.stpclient.model.ServiceResult;
 import com.noh.stpclient.model.xml.DataPDU;
@@ -16,6 +18,7 @@ import com.noh.stpclient.web.dto.GetUpdatesResponseDto;
 import com.noh.stpclient.web.dto.LogonResponseDto;
 import com.noh.stpclient.web.dto.SendRequest;
 import com.noh.stpclient.web.dto.SendResponseDto;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -38,11 +41,9 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.StringWriter;
 
-import jakarta.xml.bind.JAXBException;
-
 /**
  * Service layer for Gateway Integration.
- * Orchestrates calls to the SOAP Client.
+ * Orchestrates calls to the SOAP Client and records audit logs for each operation.
  */
 @Service
 @Slf4j
@@ -51,6 +52,7 @@ public class GwIntegrationService {
     private final GWClientMuRemote soapClient;
     private final CryptoManager cryptoManager;
     private final DataPDUTransformer dataPDUTransformer;
+    private final AuditService auditService;
 
     @Value("${stp.soap.username}")
     private String stpUsername;
@@ -62,21 +64,21 @@ public class GwIntegrationService {
     public GwIntegrationService(GWClientMuRemote soapClient,
                                 CryptoManager cryptoManager,
                                 DataPDUTransformer dataPDUTransformer,
+                                AuditService auditService,
                                 @Value("${stp.soap.username}") String stpUsername,
                                 @Value("${stp.soap.password}") String stpPassword,
                                 @Value("${stp.soap.rtgs-receiver}") String rtgsMsgReceiver) {
         this.soapClient = soapClient;
         this.cryptoManager = cryptoManager;
         this.dataPDUTransformer = dataPDUTransformer;
+        this.auditService = auditService;
         this.stpUsername = stpUsername;
         this.stpPassword = stpPassword;
         this.rtgsMsgReceiver = rtgsMsgReceiver;
     }
 
     public ServiceResult<LogonResponseDto> performLogon() {
-
         try {
-            // sign password
             String signedPassword = cryptoManager.signValue(this.stpPassword);
             log.info("Signed Password: {}", signedPassword);
 
@@ -115,21 +117,25 @@ public class GwIntegrationService {
 
     public ServiceResult<List<GetUpdatesResponseDto>> performGetUpdates(String sessionId) {
         Assert.hasText(sessionId, "Session ID must not be empty");
+        ServiceResult<List<GetUpdatesResponseDto>> result;
         try {
             GetUpdatesResponse response = soapClient.getUpdates(sessionId);
             if (response == null || response.getItems() == null) {
-                return ServiceResult.success(Collections.emptyList());
+                result = ServiceResult.success(Collections.emptyList());
+            } else {
+                List<GetUpdatesResponseDto> items = response.getItems().stream()
+                        .map(GetUpdatesResponseDto::from)
+                        .toList();
+                result = ServiceResult.success(items);
             }
-            List<GetUpdatesResponseDto> items = response.getItems().stream()
-                    .map(GetUpdatesResponseDto::from)
-                    .toList();
-            return ServiceResult.success(items);
         } catch (GatewayIntegrationException e) {
-            return ServiceResult.failure(e.getCode(), e.getDescription());
+            result = ServiceResult.failure(e.getCode(), e.getDescription());
         } catch (Exception e) {
             log.error("GetUpdates failed for session: {}", sessionId, e);
-            return ServiceResult.failure("GW-999", "Gateway GetUpdates Failed");
+            result = ServiceResult.failure("GW-999", "Gateway GetUpdates Failed");
         }
+        auditService.record(AuditLog.Operation.GET_UPDATES, sessionId, sessionId, result);
+        return result;
     }
 
     public ServiceResult<SendResponseDto> performSend(SendRequest request) {
@@ -137,6 +143,7 @@ public class GwIntegrationService {
         Assert.hasText(request.sessionId(), "Session ID must not be empty");
         Assert.notNull(request.message(), "Message content cannot be null");
 
+        ServiceResult<SendResponseDto> result;
         try {
             Send soapRequest = new Send();
             soapRequest.setSessionId(request.sessionId());
@@ -152,33 +159,33 @@ public class GwIntegrationService {
             SendResponse response = soapClient.send(soapRequest);
 
             if (response == null || response.getData() == null) {
-                return ServiceResult.failure("GW-002", "Received empty response from Gateway");
-            }
-
-            SendResponseData data = response.getData();
-
-            try {
-                boolean signatureValid = cryptoManager.verifyResponseSignature(data);
-                if (!signatureValid) {
-                    log.warn("Gateway response signature verification FAILED for session: {}", request.sessionId());
-                } else {
-                    log.info("Gateway response signature verified OK for session: {}", request.sessionId());
+                result = ServiceResult.failure("GW-002", "Received empty response from Gateway");
+            } else {
+                SendResponseData data = response.getData();
+                try {
+                    boolean signatureValid = cryptoManager.verifyResponseSignature(data);
+                    if (!signatureValid) {
+                        log.warn("Gateway response signature verification FAILED for session: {}", request.sessionId());
+                    } else {
+                        log.info("Gateway response signature verified OK for session: {}", request.sessionId());
+                    }
+                } catch (Exception e) {
+                    log.warn("Gateway response signature verification error for session: {}: {}", request.sessionId(), e.getMessage());
                 }
-            } catch (Exception e) {
-                log.warn("Gateway response signature verification error for session: {}: {}", request.sessionId(), e.getMessage());
+                if ("NAK".equals(data.getType())) {
+                    result = ServiceResult.failure(data.getCode(), data.getDescription());
+                } else {
+                    result = ServiceResult.success(SendResponseDto.from(data));
+                }
             }
-
-            if ("NAK".equals(data.getType())) {
-                return ServiceResult.failure(data.getCode(), data.getDescription());
-            }
-
-            return ServiceResult.success(SendResponseDto.from(data));
         } catch (GatewayIntegrationException e) {
-            return ServiceResult.failure(e.getCode(), e.getDescription());
+            result = ServiceResult.failure(e.getCode(), e.getDescription());
         } catch (Exception e) {
             log.error("Send failed for session: {}", request.sessionId(), e);
-            return ServiceResult.failure("GW-999", "Gateway Send Failed");
+            result = ServiceResult.failure("GW-999", "Gateway Send Failed");
         }
+        auditService.record(AuditLog.Operation.SEND, request.sessionId(), request, result);
+        return result;
     }
 
     public ServiceResult<Void> performSendAckNak(com.noh.stpclient.web.dto.SendAckNakRequest request) {
@@ -193,21 +200,25 @@ public class GwIntegrationService {
         }
         String sessionId = logonResult.getData().sessionId();
 
+        ServiceResult<Void> result;
         try {
             SendResponseData data = new SendResponseData();
             data.setType(request.type());
             data.setDatetime(request.datetime());
             data.setMir(request.mir());
             soapClient.sendAckNak(sessionId, data);
-            return ServiceResult.success(null);
+            result = ServiceResult.success(null);
         } catch (GatewayIntegrationException e) {
-            return ServiceResult.failure(e.getCode(), e.getDescription());
+            result = ServiceResult.failure(e.getCode(), e.getDescription());
         } catch (Exception e) {
             log.error("SendAckNak failed for mir: {}", request.mir(), e);
-            return ServiceResult.failure("GW-999", "Gateway SendAckNak Failed");
+            result = ServiceResult.failure("GW-999", "Gateway SendAckNak Failed");
         } finally {
             performLogout(sessionId);
         }
+        // Audit after logout — SOAP XML captured from sendAckNak call (not the internal logon)
+        auditService.record(AuditLog.Operation.SEND_ACK_NAK, sessionId, request, result);
+        return result;
     }
 
     public ServiceResult<SendResponseDto> performSendFinancialTransaction(FinancialTransactionRequest request) {
@@ -215,6 +226,7 @@ public class GwIntegrationService {
         Assert.hasText(request.sessionId(), "Session ID must not be empty");
         Assert.notNull(request.transaction(), "Transaction data cannot be null");
 
+        ServiceResult<SendResponseDto> result;
         try {
             DataPDU dataPDU = dataPDUTransformer.transformToDataPDU(request);
             String xmlContent = dataPDUTransformer.marshalToXml(dataPDU);
@@ -227,37 +239,85 @@ public class GwIntegrationService {
             SendResponse response = soapClient.send(soapRequest);
 
             if (response == null || response.getData() == null) {
-                return ServiceResult.failure("GW-002", "Received empty response from Gateway");
-            }
-
-            SendResponseData data = response.getData();
-
-            try {
-                boolean signatureValid = cryptoManager.verifyResponseSignature(data);
-                if (!signatureValid) {
-                    log.warn("Gateway response signature verification FAILED for session: {}", request.sessionId());
-                } else {
-                    log.info("Gateway response signature verified OK for session: {}", request.sessionId());
+                result = ServiceResult.failure("GW-002", "Received empty response from Gateway");
+            } else {
+                SendResponseData data = response.getData();
+                try {
+                    boolean signatureValid = cryptoManager.verifyResponseSignature(data);
+                    if (!signatureValid) {
+                        log.warn("Gateway response signature verification FAILED for session: {}", request.sessionId());
+                    } else {
+                        log.info("Gateway response signature verified OK for session: {}", request.sessionId());
+                    }
+                } catch (Exception e) {
+                    log.warn("Gateway response signature verification error for session: {}: {}", request.sessionId(), e.getMessage());
                 }
-            } catch (Exception e) {
-                log.warn("Gateway response signature verification error for session: {}: {}", request.sessionId(), e.getMessage());
+                if ("NAK".equals(data.getType())) {
+                    result = ServiceResult.failure(data.getCode(), data.getDescription());
+                } else {
+                    result = ServiceResult.success(SendResponseDto.from(data));
+                }
             }
-
-            if ("NAK".equals(data.getType())) {
-                return ServiceResult.failure(data.getCode(), data.getDescription());
-            }
-
-            return ServiceResult.success(SendResponseDto.from(data));
-
         } catch (JAXBException e) {
             log.error("XML marshaling failed for financial transaction", e);
-            return ServiceResult.failure("GW-003", "XML transformation failed: " + e.getMessage());
+            result = ServiceResult.failure("GW-003", "XML transformation failed: " + e.getMessage());
         } catch (GatewayIntegrationException e) {
-            return ServiceResult.failure(e.getCode(), e.getDescription());
+            result = ServiceResult.failure(e.getCode(), e.getDescription());
         } catch (Exception e) {
             log.error("Financial transaction send failed for session: {}", request.sessionId(), e);
-            return ServiceResult.failure("GW-999", "Financial transaction send failed");
+            result = ServiceResult.failure("GW-999", "Financial transaction send failed");
         }
+        auditService.record(AuditLog.Operation.SEND, request.sessionId(), request, result);
+        return result;
+    }
+
+    public ServiceResult<SendResponseDto> performFinancialTransaction(FinancialTransactionRequest request) {
+        Assert.notNull(request, "Financial transaction request cannot be null");
+        Assert.hasText(request.sessionId(), "Session ID must not be empty");
+        Assert.notNull(request.transaction(), "Transaction data cannot be null");
+
+        ServiceResult<SendResponseDto> result;
+        try {
+            DataPDU dataPDU = dataPDUTransformer.transformToDataPDU(request);
+            String xmlContent = dataPDUTransformer.marshalToXml(dataPDU);
+            String signedXmlContent = cryptoManager.signXml(xmlContent);
+
+            log.info("Generated signed XML for financial transaction: {}", signedXmlContent);
+
+            Send soapRequest = new Send();
+            soapRequest.setSessionId(request.sessionId());
+            Send.Message soapMessage = new Send.Message();
+            soapMessage.setBlock4(signedXmlContent);
+            soapMessage.setMsgReceiver(rtgsMsgReceiver);
+            soapMessage.setMsgSender(request.transaction().senderBic());
+            soapMessage.setMsgType("pacs.008.001.08");
+            soapMessage.setMsgSequence(request.transaction().msgSequence());
+            soapMessage.setFormat("MX");
+            soapRequest.setMessage(soapMessage);
+
+            SendResponse response = soapClient.send(soapRequest);
+
+            if (response == null || response.getData() == null) {
+                result = ServiceResult.failure("GW-002", "Received empty response from Gateway");
+            } else {
+                SendResponseData data = response.getData();
+                if ("NAK".equals(data.getType())) {
+                    result = ServiceResult.failure(data.getCode(), data.getDescription());
+                } else {
+                    result = ServiceResult.success(SendResponseDto.from(data));
+                }
+            }
+        } catch (JAXBException e) {
+            log.error("XML marshaling failed for financial transaction", e);
+            result = ServiceResult.failure("GW-003", "XML transformation failed: " + e.getMessage());
+        } catch (GatewayIntegrationException e) {
+            result = ServiceResult.failure(e.getCode(), e.getDescription());
+        } catch (Exception e) {
+            log.error("Financial transaction failed for session: {}", request.sessionId(), e);
+            result = ServiceResult.failure("GW-999", "Financial transaction failed");
+        }
+        auditService.record(AuditLog.Operation.SEND, request.sessionId(), request, result);
+        return result;
     }
 
     private Send buildSend(FinancialTransactionRequest request, String signedXml) {
@@ -296,51 +356,5 @@ public class GwIntegrationService {
         StringWriter sw = new StringWriter();
         tf.transform(new DOMSource(doc), new StreamResult(sw));
         return sw.toString();
-    }
-
-    public ServiceResult<SendResponseDto> performFinancialTransaction(FinancialTransactionRequest request) {
-        Assert.notNull(request, "Financial transaction request cannot be null");
-        Assert.hasText(request.sessionId(), "Session ID must not be empty");
-        Assert.notNull(request.transaction(), "Transaction data cannot be null");
-
-        try {
-            DataPDU dataPDU = dataPDUTransformer.transformToDataPDU(request);
-            String xmlContent = dataPDUTransformer.marshalToXml(dataPDU);
-            String signedXmlContent = cryptoManager.signXml(xmlContent);
-
-            log.info("Generated signed XML for financial transaction: {}", signedXmlContent);
-
-            Send soapRequest = new Send();
-            soapRequest.setSessionId(request.sessionId());
-            Send.Message soapMessage = new Send.Message();
-            soapMessage.setBlock4(signedXmlContent);
-            soapMessage.setMsgReceiver(rtgsMsgReceiver);
-            soapMessage.setMsgSender(request.transaction().senderBic());
-            soapMessage.setMsgType("pacs.008.001.08");
-            soapMessage.setMsgSequence(request.transaction().msgSequence());
-            soapMessage.setFormat("MX");
-            soapRequest.setMessage(soapMessage);
-
-            SendResponse response = soapClient.send(soapRequest);
-
-            if (response == null || response.getData() == null) {
-                return ServiceResult.failure("GW-002", "Received empty response from Gateway");
-            }
-
-            SendResponseData data = response.getData();
-            if ("NAK".equals(data.getType())) {
-                return ServiceResult.failure(data.getCode(), data.getDescription());
-            }
-
-            return ServiceResult.success(SendResponseDto.from(data));
-        } catch (JAXBException e) {
-            log.error("XML marshaling failed for financial transaction", e);
-            return ServiceResult.failure("GW-003", "XML transformation failed: " + e.getMessage());
-        } catch (GatewayIntegrationException e) {
-            return ServiceResult.failure(e.getCode(), e.getDescription());
-        } catch (Exception e) {
-            log.error("Financial transaction failed for session: {}", request.sessionId(), e);
-            return ServiceResult.failure("GW-999", "Financial transaction failed");
-        }
     }
 }
