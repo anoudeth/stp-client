@@ -70,180 +70,205 @@ public class DataPDU {
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class FIId {
-        
-        @XmlElement(name = "FinInstnId")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "FinInstnId", namespace = NS)
         private FinInstnId finInstnId;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class FinInstnId {
-        
-        @XmlElement(name = "BICFI")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "BICFI", namespace = NS)
         private String bicfi;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
+    @XmlRootElement(name = "Document", namespace = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08")
     public static class Document {
-        
-        @XmlElement(name = "FIToFICstmrCdtTrf")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "FIToFICstmrCdtTrf", namespace = NS)
         private FIToFICstmrCdtTrf fiToFICstmrCdtTrf;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class FIToFICstmrCdtTrf {
-        
-        @XmlElement(name = "GrpHdr")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "GrpHdr", namespace = NS)
         private GrpHdr grpHdr;
-        
-        @XmlElement(name = "CdtTrfTxInf")
+
+        @XmlElement(name = "CdtTrfTxInf", namespace = NS)
         private CdtTrfTxInf cdtTrfTxInf;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class GrpHdr {
-        
-        @XmlElement(name = "MsgId")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "MsgId", namespace = NS)
         private String msgId;
-        
-        @XmlElement(name = "CreDtTm")
+
+        @XmlElement(name = "CreDtTm", namespace = NS)
         private String creDtTm;
-        
-        @XmlElement(name = "NbOfTxs")
+
+        @XmlElement(name = "NbOfTxs", namespace = NS)
         private String nbOfTxs;
-        
-        @XmlElement(name = "SttlmInf")
+
+        @XmlElement(name = "SttlmInf", namespace = NS)
         private SttlmInf sttlmInf;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class SttlmInf {
-        
-        @XmlElement(name = "SttlmMtd")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "SttlmMtd", namespace = NS)
         private String sttlmMtd;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class CdtTrfTxInf {
-        
-        @XmlElement(name = "PmtId")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "PmtId", namespace = NS)
         private PmtId pmtId;
-        
-        @XmlElement(name = "PmtTpInf")
+
+        @XmlElement(name = "PmtTpInf", namespace = NS)
         private PmtTpInf pmtTpInf;
-        
-        @XmlElement(name = "IntrBkSttlmAmt")
+
+        @XmlElement(name = "IntrBkSttlmAmt", namespace = NS)
         private IntrBkSttlmAmt intrBkSttlmAmt;
-        
-        @XmlElement(name = "IntrBkSttlmDt")
+
+        @XmlElement(name = "IntrBkSttlmDt", namespace = NS)
         private String intrBkSttlmDt;
-        
-        @XmlElement(name = "ChrgBr")
+
+        @XmlElement(name = "ChrgBr", namespace = NS)
         private String chrgBr;
-        
-        @XmlElement(name = "InstgAgt")
+
+        @XmlElement(name = "InstgAgt", namespace = NS)
         private InstgAgt instgAgt;
-        
-        @XmlElement(name = "InstdAgt")
+
+        @XmlElement(name = "InstdAgt", namespace = NS)
         private InstdAgt instdAgt;
-        
-        @XmlElement(name = "Dbtr")
+
+        @XmlElement(name = "Dbtr", namespace = NS)
         private Dbtr dbtr;
-        
-        @XmlElement(name = "DbtrAcct")
+
+        @XmlElement(name = "DbtrAcct", namespace = NS)
         private DbtrAcct dbtrAcct;
-        
-        @XmlElement(name = "DbtrAgt")
+
+        @XmlElement(name = "DbtrAgt", namespace = NS)
         private DbtrAgt dbtrAgt;
-        
-        @XmlElement(name = "DbtrAgtAcct")
+
+        @XmlElement(name = "DbtrAgtAcct", namespace = NS)
         private DbtrAgtAcct dbtrAgtAcct;
-        
-        @XmlElement(name = "CdtrAgt")
+
+        @XmlElement(name = "CdtrAgt", namespace = NS)
         private CdtrAgt cdtrAgt;
-        
-        @XmlElement(name = "CdtrAgtAcct")
+
+        @XmlElement(name = "CdtrAgtAcct", namespace = NS)
         private CdtrAgtAcct cdtrAgtAcct;
-        
-        @XmlElement(name = "Cdtr")
+
+        @XmlElement(name = "Cdtr", namespace = NS)
         private Cdtr cdtr;
-        
-        @XmlElement(name = "CdtrAcct")
+
+        @XmlElement(name = "CdtrAcct", namespace = NS)
         private CdtrAcct cdtrAcct;
-        
-        @XmlElement(name = "InstrForNxtAgt")
+
+        @XmlElement(name = "InstrForNxtAgt", namespace = NS)
         private InstrForNxtAgt instrForNxtAgt;
-        
-        @XmlElement(name = "RmtInf")
+
+        @XmlElement(name = "RmtInf", namespace = NS)
         private RmtInf rmtInf;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class PmtId {
-        
-        @XmlElement(name = "InstrId")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "InstrId", namespace = NS)
         private String instrId;
-        
-        @XmlElement(name = "EndToEndId")
+
+        @XmlElement(name = "EndToEndId", namespace = NS)
         private String endToEndId;
-        
-        @XmlElement(name = "TxId")
+
+        @XmlElement(name = "TxId", namespace = NS)
         private String txId;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class PmtTpInf {
-        
-        @XmlElement(name = "ClrChanl")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "ClrChanl", namespace = NS)
         private String clrChanl;
-        
-        @XmlElement(name = "SvcLvl")
+
+        @XmlElement(name = "SvcLvl", namespace = NS)
         private SvcLvl svcLvl;
-        
-        @XmlElement(name = "LclInstrm")
+
+        @XmlElement(name = "LclInstrm", namespace = NS)
         private LclInstrm lclInstrm;
-        
-        @XmlElement(name = "CtgyPurp")
+
+        @XmlElement(name = "CtgyPurp", namespace = NS)
         private CtgyPurp ctgyPurp;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class SvcLvl {
-        
-        @XmlElement(name = "Prtry")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "Prtry", namespace = NS)
         private String prtry;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class LclInstrm {
-        
-        @XmlElement(name = "Prtry")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "Prtry", namespace = NS)
         private String prtry;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class CtgyPurp {
-        
-        @XmlElement(name = "Prtry")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "Prtry", namespace = NS)
         private String prtry;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class IntrBkSttlmAmt {
-        
+
         private String value;
-        
+
         @XmlAttribute(name = "Ccy")
         private String ccy;
     }
@@ -251,75 +276,93 @@ public class DataPDU {
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class InstgAgt {
-        
-        @XmlElement(name = "FinInstnId")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "FinInstnId", namespace = NS)
         private FinInstnId finInstnId;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class InstdAgt {
-        
-        @XmlElement(name = "FinInstnId")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "FinInstnId", namespace = NS)
         private FinInstnId finInstnId;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class Dbtr {
-        
-        @XmlElement(name = "Nm")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "Nm", namespace = NS)
         private String nm;
-        
-        @XmlElement(name = "PstlAdr")
+
+        @XmlElement(name = "PstlAdr", namespace = NS)
         private PstlAdr pstlAdr;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class PstlAdr {
-        
-        @XmlElement(name = "AdrLine")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "AdrLine", namespace = NS)
         private List<String> adrLine;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class DbtrAcct {
-        
-        @XmlElement(name = "Id")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "Id", namespace = NS)
         private Id id;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class DbtrAgt {
-        
-        @XmlElement(name = "FinInstnId")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "FinInstnId", namespace = NS)
         private FinInstnId finInstnId;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class DbtrAgtAcct {
-        
-        @XmlElement(name = "Id")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "Id", namespace = NS)
         private Id id;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class CdtrAgt {
-        
-        @XmlElement(name = "FinInstnId")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "FinInstnId", namespace = NS)
         private FinInstnId finInstnId;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class CdtrAgtAcct {
-        
-        @XmlElement(name = "Id")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "Id", namespace = NS)
         private Id id;
     }
 
@@ -327,10 +370,12 @@ public class DataPDU {
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class Cdtr {
 
-        @XmlElement(name = "Nm")
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "Nm", namespace = NS)
         private String nm;
 
-        @XmlElement(name = "PstlAdr")
+        @XmlElement(name = "PstlAdr", namespace = NS)
         private PstlAdr pstlAdr;
     }
 
@@ -338,39 +383,49 @@ public class DataPDU {
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class InstrForNxtAgt {
 
-        @XmlElement(name = "InstrInf")
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "InstrInf", namespace = NS)
         private String instrInf;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class CdtrAcct {
-        
-        @XmlElement(name = "Id")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "Id", namespace = NS)
         private Id id;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class Id {
-        
-        @XmlElement(name = "Othr")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "Othr", namespace = NS)
         private Othr othr;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class Othr {
-        
-        @XmlElement(name = "Id")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "Id", namespace = NS)
         private String id;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class RmtInf {
-        
-        @XmlElement(name = "Ustrd")
+
+        private static final String NS = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        @XmlElement(name = "Ustrd", namespace = NS)
         private String ustrd;
     }
 }
