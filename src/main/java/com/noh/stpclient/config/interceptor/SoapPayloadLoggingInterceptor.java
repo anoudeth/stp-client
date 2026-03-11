@@ -103,7 +103,7 @@ public class SoapPayloadLoggingInterceptor implements ClientInterceptor {
     private String extractPayload(final org.springframework.ws.WebServiceMessage message) {
         try (final ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
             message.writeTo(buffer);
-            return buffer.toString(StandardCharsets.UTF_8);
+            return buffer.toString(StandardCharsets.UTF_8).replace("\r\n", "\n").replace("\r", "\n");
         } catch (IOException e) {
             log.error("Failed to extract SOAP payload for audit", e);
             return "[EXTRACTION_ERROR: " + e.getMessage() + "]";
