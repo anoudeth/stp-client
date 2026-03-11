@@ -22,24 +22,11 @@ import com.noh.stpclient.web.dto.SendResponseDto;
 import java.util.Collections;
 import java.util.List;
 
-import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
-import jakarta.xml.bind.Marshaller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import java.io.StringWriter;
 
 /**
  * Service layer for Gateway Integration.
@@ -236,8 +223,7 @@ public class GwIntegrationService {
             String signedXml = cryptoManager.signXml(xmlContent);
 
             Send soapRequest = buildSend(request, signedXml);
-            String sendXml = buildSendXml(soapRequest);
-            log.info("Sending SOAP request:\n{}", sendXml);
+            log.info("Sending SOAP request block4:\n{}", signedXml);
 
             SendResponse response = soapClient.send(soapRequest);
 
@@ -330,27 +316,4 @@ public class GwIntegrationService {
         return soapRequest;
     }
 
-    private String buildSendXml(Send send) throws Exception {
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        dbf.setNamespaceAware(true);
-        Document doc = dbf.newDocumentBuilder().newDocument();
-        Marshaller marshaller = JAXBContext.newInstance(Send.class).createMarshaller();
-        marshaller.marshal(send, doc);
-
-        NodeList block4Nodes = doc.getElementsByTagName("block4");
-        if (block4Nodes.getLength() > 0) {
-            Element block4Elem = (Element) block4Nodes.item(0);
-            String content = block4Elem.getTextContent();
-            while (block4Elem.hasChildNodes()) {
-                block4Elem.removeChild(block4Elem.getFirstChild());
-            }
-            block4Elem.appendChild(doc.createCDATASection(content));
-        }
-
-        Transformer tf = TransformerFactory.newInstance().newTransformer();
-        tf.setOutputProperty(OutputKeys.INDENT, "yes");
-        StringWriter sw = new StringWriter();
-        tf.transform(new DOMSource(doc), new StreamResult(sw));
-        return sw.toString();
-    }
 }

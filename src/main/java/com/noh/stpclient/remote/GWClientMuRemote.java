@@ -12,6 +12,9 @@ import com.noh.stpclient.model.xml.SendResponse;
 import com.noh.stpclient.model.xml.SendResponseData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ws.client.core.support.WebServiceGatewaySupport;
+import org.springframework.ws.soap.saaj.SaajSoapMessage;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 /**
  * Client for GWClientMU SOAP Service.
@@ -47,7 +50,25 @@ public class GWClientMuRemote extends WebServiceGatewaySupport {
 
     public SendResponse send(Send request) {
         log.info(":: Initiating SOAP Send for session: {}", request.getSessionId());
-        return (SendResponse) getWebServiceTemplate().marshalSendAndReceive(request);
+        return (SendResponse) getWebServiceTemplate().marshalSendAndReceive(request, message -> {
+            if (message instanceof SaajSoapMessage saajMsg) {
+                try {
+                    NodeList nodes = saajMsg.getSaajMessage().getSOAPBody().getElementsByTagName("block4");
+                    if (nodes.getLength() > 0) {
+                        Element block4Elem = (Element) nodes.item(0);
+                        String content = block4Elem.getTextContent();
+                        while (block4Elem.hasChildNodes()) {
+                            block4Elem.removeChild(block4Elem.getFirstChild());
+                        }
+                        block4Elem.appendChild(
+                                saajMsg.getSaajMessage().getSOAPBody().getOwnerDocument().createCDATASection(content)
+                        );
+                    }
+                } catch (jakarta.xml.soap.SOAPException e) {
+                    throw new RuntimeException("Failed to wrap block4 in CDATA", e);
+                }
+            }
+        });
     }
 
     public void sendAckNak(String sessionId, SendResponseData data) {
