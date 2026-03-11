@@ -211,7 +211,11 @@ public class DataPDUTransformer {
         // Creditor
         DataPDU.Cdtr cdtr = new DataPDU.Cdtr();
         cdtr.setNm(transaction.creditorName());
-        cdtr.setPstlAdr(new DataPDU.PstlAdr());
+        DataPDU.PstlAdr cdtrPstlAdr = new DataPDU.PstlAdr();
+        if (transaction.creditorAddressLines() != null && !transaction.creditorAddressLines().isEmpty()) {
+            cdtrPstlAdr.setAdrLine(transaction.creditorAddressLines());
+        }
+        cdtr.setPstlAdr(cdtrPstlAdr);
         cdtTrfTxInf.setCdtr(cdtr);
         
         // Creditor Account

@@ -79,6 +79,8 @@ public record FinancialTransactionRequest(
             
             List<String> debtorAddressLines,
 
+            List<String> creditorAddressLines,
+
             String instrForNxtAgt,
 
             @NotBlank(message = "Remittance information cannot be blank")

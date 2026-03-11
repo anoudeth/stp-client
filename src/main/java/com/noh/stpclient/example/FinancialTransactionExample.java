@@ -52,6 +52,7 @@ public class FinancialTransactionExample {
             "0961227683628",                       // creditorAccount
             "0000010000200510",                    // creditorAgentAccount
             List.of(" PHOXAY", " ", " PHOXAY", " "), // debtorAddressLines
+            null,                                  // creditorAddressLines
             "/BNF/",                               // instrForNxtAgt
             "PURCHASE FOR GOODS"                   // remittanceInformation
         );
@@ -87,6 +88,7 @@ public class FinancialTransactionExample {
      *       "creditorAccount": "0961227683628",
      *       "creditorAgentAccount": "0000010000200510",
      *       "debtorAddressLines": [" PHOXAY", " ", " PHOXAY", " "],
+     *       "creditorAddressLines": ["CREDITOR NAME", "Viva Biller", "Manama", "BH"],
      *       "instrForNxtAgt": "/BNF/",
      *       "remittanceInformation": "PURCHASE FOR GOODS"
      *     }
