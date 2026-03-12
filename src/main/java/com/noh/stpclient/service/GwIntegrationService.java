@@ -183,15 +183,10 @@ public class GwIntegrationService {
 
     public ServiceResult<Void> performSendAckNak(com.noh.stpclient.web.dto.SendAckNakRequest request) {
         Assert.notNull(request, "SendAckNak request cannot be null");
+        Assert.hasText(request.sessionId(), "Session ID must not be empty");
         Assert.hasText(request.type(), "Type must not be empty");
         Assert.hasText(request.datetime(), "Datetime must not be empty");
         Assert.hasText(request.mir(), "MIR must not be empty");
-
-        ServiceResult<LogonResponseDto> logonResult = performLogon();
-        if (!logonResult.isSuccess()) {
-            return ServiceResult.failure(logonResult.getErrorCode(), logonResult.getErrorMessage());
-        }
-        String sessionId = logonResult.getData().sessionId();
 
         ServiceResult<Void> result;
         try {
@@ -199,18 +194,15 @@ public class GwIntegrationService {
             data.setType(request.type());
             data.setDatetime(request.datetime());
             data.setMir(request.mir());
-            soapClient.sendAckNak(sessionId, data);
+            soapClient.sendAckNak(request.sessionId(), data);
             result = ServiceResult.success(null);
         } catch (GatewayIntegrationException e) {
             result = ServiceResult.failure(e.getCode(), e.getDescription());
         } catch (Exception e) {
             log.error("SendAckNak failed for mir: {}", request.mir(), e);
             result = ServiceResult.failure("GW-999", "Gateway SendAckNak Failed");
-        } finally {
-            performLogout(sessionId);
         }
-        // Audit after logout — SOAP XML captured from sendAckNak call (not the internal logon)
-        auditService.record(AuditLog.Operation.SEND_ACK_NAK, sessionId, request, result);
+        auditService.record(AuditLog.Operation.SEND_ACK_NAK, request.sessionId(), request, result);
         return result;
     }
 
