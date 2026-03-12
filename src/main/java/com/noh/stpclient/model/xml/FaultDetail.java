@@ -17,6 +17,6 @@ public class FaultDetail {
     @XmlElement(required = true)
     protected String description;
 
-    @XmlElement(required = true)
+    @XmlElement
     protected String info;
 }

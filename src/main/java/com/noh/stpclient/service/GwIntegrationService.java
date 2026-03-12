@@ -64,7 +64,7 @@ public class GwIntegrationService {
             return ServiceResult.success(new LogonResponseDto(sessionId));
         } catch (GatewayIntegrationException e) {
             log.error(e.getMessage());
-            return ServiceResult.failure(e.getCode(), e.getInfo());
+            return ServiceResult.failure(e.getCode(), e.getDescription(), e.getInfo());
         } catch (Exception e) {
             log.error("Logon failed", e);
             return ServiceResult.failure("GW-999", "Gateway Logon Failed");
@@ -77,7 +77,7 @@ public class GwIntegrationService {
             log.info("Logout successful");
             return ServiceResult.success(null);
         } catch (GatewayIntegrationException e) {
-            return ServiceResult.failure(e.getCode(), e.getDescription());
+            return ServiceResult.failure(e.getCode(), e.getDescription(), e.getInfo());
         } catch (Exception e) {
             log.error("Logout failed", e);
             return ServiceResult.failure("GW-999", "Gateway Logout Failed");
@@ -101,13 +101,13 @@ public class GwIntegrationService {
                 try {
                     result = doGetUpdates(freshSession);
                 } catch (GatewayIntegrationException retryEx) {
-                    result = ServiceResult.failure(retryEx.getCode(), retryEx.getDescription());
+                    result = ServiceResult.failure(retryEx.getCode(), retryEx.getDescription(), retryEx.getInfo());
                 } catch (Exception retryEx) {
                     log.error("GetUpdates retry failed for session: {}", freshSession, retryEx);
                     result = ServiceResult.failure("GW-999", "Gateway GetUpdates Failed");
                 }
             } else {
-                result = ServiceResult.failure(e.getCode(), e.getDescription());
+                result = ServiceResult.failure(e.getCode(), e.getDescription(), e.getInfo());
             }
         } catch (Exception e) {
             log.error("GetUpdates failed for session: {}", sessionId, e);
@@ -171,7 +171,7 @@ public class GwIntegrationService {
                 }
             }
         } catch (GatewayIntegrationException e) {
-            result = ServiceResult.failure(e.getCode(), e.getDescription());
+            result = ServiceResult.failure(e.getCode(), e.getDescription(), e.getInfo());
         } catch (Exception e) {
             log.error("Send failed for session: {}", request.sessionId(), e);
             result = ServiceResult.failure("GW-999", "Gateway Send Failed");
@@ -196,7 +196,7 @@ public class GwIntegrationService {
             soapClient.sendAckNak(sessionId, data);
             result = ServiceResult.success(null);
         } catch (GatewayIntegrationException e) {
-            result = ServiceResult.failure(e.getCode(), e.getDescription());
+            result = ServiceResult.failure(e.getCode(), e.getDescription(), e.getInfo());
         } catch (Exception e) {
             log.error("SendAckNak failed for mir: {}", request.mir(), e);
             result = ServiceResult.failure("GW-999", "Gateway SendAckNak Failed");
@@ -225,13 +225,13 @@ public class GwIntegrationService {
                 try {
                     result = doSendFinancialTransaction(retryRequest);
                 } catch (GatewayIntegrationException retryEx) {
-                    result = ServiceResult.failure(retryEx.getCode(), retryEx.getDescription());
+                    result = ServiceResult.failure(retryEx.getCode(), retryEx.getDescription(), retryEx.getInfo());
                 } catch (Exception retryEx) {
                     log.error("Send retry failed for session: {}", freshSession, retryEx);
                     result = ServiceResult.failure("GW-999", "Financial transaction send failed");
                 }
             } else {
-                result = ServiceResult.failure(e.getCode(), e.getDescription());
+                result = ServiceResult.failure(e.getCode(), e.getDescription(), e.getInfo());
             }
         } catch (JAXBException e) {
             log.error("XML marshaling failed for financial transaction", e);
@@ -283,13 +283,13 @@ public class GwIntegrationService {
                 try {
                     result = doFinancialTransaction(retryRequest);
                 } catch (GatewayIntegrationException retryEx) {
-                    result = ServiceResult.failure(retryEx.getCode(), retryEx.getDescription());
+                    result = ServiceResult.failure(retryEx.getCode(), retryEx.getDescription(), retryEx.getInfo());
                 } catch (Exception retryEx) {
                     log.error("Financial transaction retry failed for session: {}", freshSession, retryEx);
                     result = ServiceResult.failure("GW-999", "Financial transaction failed");
                 }
             } else {
-                result = ServiceResult.failure(e.getCode(), e.getDescription());
+                result = ServiceResult.failure(e.getCode(), e.getDescription(), e.getInfo());
             }
         } catch (JAXBException e) {
             log.error("XML marshaling failed for financial transaction", e);

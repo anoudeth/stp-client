@@ -5,12 +5,14 @@ import com.noh.stpclient.model.ApiResponse;
 import com.noh.stpclient.model.EResponseStatus;
 import com.noh.stpclient.model.ServiceResult;
 import com.noh.stpclient.model.base.ClientInfo;
+import com.noh.stpclient.model.base.ErrorDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * A centralized component for building consistent API responses.
@@ -81,14 +83,21 @@ public class ApiResponseBuilder {
                 locale
         );
 
+        ErrorDetails.ErrorDetailsBuilder errorBuilder = ErrorDetails.builder()
+                .errorCode(serviceResult.getErrorCode())
+                .errorMessage(serviceResult.getErrorMessage());
+
+        if (serviceResult.getErrorInfo() != null && !serviceResult.getErrorInfo().isBlank()) {
+            errorBuilder.errorDetails(Map.of("gwInfo", serviceResult.getErrorInfo()));
+        }
+
         return ApiResponse.<T>builder()
                 .resCode(responseCode)
                 .resMessage(responseMessage)
                 .resStatus(EResponseStatus.FAILED)
                 .clientInfo(clientInfo)
                 .resTimestamp(Instant.now())
-//                .data(serviceResult.getData())
-                // NOTE: We intentionally do not include 'data' in a failure response.
+                .error(errorBuilder.build())
                 .build();
     }
 }

@@ -14,6 +14,7 @@ public class ServiceResult<T> {
     private T data;
     private String errorCode;
     private String errorMessage;
+    private String errorInfo;
 
     public static <T> ServiceResult<T> success(T data) {
         return ServiceResult.<T>builder()
@@ -25,9 +26,17 @@ public class ServiceResult<T> {
     public static <T> ServiceResult<T> failure(String errorCode, String errorMessage) {
         return ServiceResult.<T>builder()
                 .success(false)
-                .data(null)
                 .errorCode(errorCode)
                 .errorMessage(errorMessage)
+                .build();
+    }
+
+    public static <T> ServiceResult<T> failure(String errorCode, String errorMessage, String errorInfo) {
+        return ServiceResult.<T>builder()
+                .success(false)
+                .errorCode(errorCode)
+                .errorMessage(errorMessage)
+                .errorInfo(errorInfo)
                 .build();
     }
 
