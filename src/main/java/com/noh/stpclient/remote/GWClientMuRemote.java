@@ -24,7 +24,7 @@ import org.w3c.dom.NodeList;
 public class GWClientMuRemote extends WebServiceGatewaySupport {
 
     public LogonResponse logon(String username, String password, String signedPassword) {
-        log.info(":: Initiating SOAP Logon for user: {}", username);
+        log.info(":: Initiating SOAP Logon for user: {} -> endpoint: {}", username, getWebServiceTemplate().getDefaultUri());
 
         final Logon request = new Logon();
         request.setUsername(username);
@@ -35,21 +35,21 @@ public class GWClientMuRemote extends WebServiceGatewaySupport {
     }
 
     public LogoutResponse logout(String sessionId) {
-        log.info(":: Initiating SOAP Logout for session: {}", sessionId);
+        log.info(":: Initiating SOAP Logout for session: {} -> endpoint: {}", sessionId, getWebServiceTemplate().getDefaultUri());
         final Logout request = new Logout();
         request.setSessionId(sessionId);
         return (LogoutResponse) getWebServiceTemplate().marshalSendAndReceive(request);
     }
 
     public GetUpdatesResponse getUpdates(String sessionId) {
-        log.info(":: Initiating SOAP GetUpdates for session: {}", sessionId);
+        log.info(":: Initiating SOAP GetUpdates for session: {} -> endpoint: {}", sessionId, getWebServiceTemplate().getDefaultUri());
         final GetUpdates request = new GetUpdates();
         request.setSessionId(sessionId);
         return (GetUpdatesResponse) getWebServiceTemplate().marshalSendAndReceive(request);
     }
 
     public SendResponse send(Send request) {
-        log.info(":: Initiating SOAP Send for session: {}", request.getSessionId());
+        log.info(":: Initiating SOAP Send for session: {} -> endpoint: {}", request.getSessionId(), getWebServiceTemplate().getDefaultUri());
         return (SendResponse) getWebServiceTemplate().marshalSendAndReceive(request, message -> {
             if (message instanceof SaajSoapMessage saajMsg) {
                 try {
@@ -72,7 +72,7 @@ public class GWClientMuRemote extends WebServiceGatewaySupport {
     }
 
     public void sendAckNak(String sessionId, SendResponseData data) {
-        log.info(":: Initiating SOAP SendACKNAK for session: {}, type: {}, mir: {}", sessionId, data.getType(), data.getMir());
+        log.info(":: Initiating SOAP SendACKNAK for session: {}, type: {}, mir: {} -> endpoint: {}", sessionId, data.getType(), data.getMir(), getWebServiceTemplate().getDefaultUri());
         final SendAckNak request = new SendAckNak();
         request.setSessionId(sessionId);
         request.setData(data);
