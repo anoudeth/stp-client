@@ -182,18 +182,18 @@ public class GwIntegrationService {
 
     public ServiceResult<Void> performSendAckNak(com.noh.stpclient.web.dto.SendAckNakRequest request) {
         Assert.notNull(request, "SendAckNak request cannot be null");
-        Assert.hasText(request.sessionId(), "Session ID must not be empty");
         Assert.hasText(request.type(), "Type must not be empty");
         Assert.hasText(request.datetime(), "Datetime must not be empty");
         Assert.hasText(request.mir(), "MIR must not be empty");
 
+        String sessionId = sessionManager.getOrCreate();
         ServiceResult<Void> result;
         try {
             SendResponseData data = new SendResponseData();
             data.setType(request.type());
             data.setDatetime(request.datetime());
             data.setMir(request.mir());
-            soapClient.sendAckNak(request.sessionId(), data);
+            soapClient.sendAckNak(sessionId, data);
             result = ServiceResult.success(null);
         } catch (GatewayIntegrationException e) {
             result = ServiceResult.failure(e.getCode(), e.getDescription());
@@ -201,7 +201,7 @@ public class GwIntegrationService {
             log.error("SendAckNak failed for mir: {}", request.mir(), e);
             result = ServiceResult.failure("GW-999", "Gateway SendAckNak Failed");
         }
-        auditService.record(AuditLog.Operation.SEND_ACK_NAK, request.sessionId(), request, result);
+        auditService.record(AuditLog.Operation.SEND_ACK_NAK, sessionId, request, result);
         return result;
     }
 
