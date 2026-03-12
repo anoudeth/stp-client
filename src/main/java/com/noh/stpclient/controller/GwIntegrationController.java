@@ -1,6 +1,5 @@
 package com.noh.stpclient.controller;
 
-import com.noh.stpclient.exception.GatewayIntegrationException;
 import com.noh.stpclient.model.ApiRequest;
 import com.noh.stpclient.model.ApiResponse;
 import com.noh.stpclient.model.ServiceResult;
@@ -66,7 +65,7 @@ public class GwIntegrationController {
             return ResponseEntity.badRequest().body(finalResponse);
         }
 
-        ServiceResult<Void> serviceResult = gwIntegrationService.performLogout(request.getData().sessionId());
+        ServiceResult<Void> serviceResult = gwIntegrationService.performLogout();
         ApiResponse<Void> finalResponse = serviceResult.isSuccess()
                 ? responseBuilder.buildSuccessResponse(null, null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
@@ -81,7 +80,6 @@ public class GwIntegrationController {
         log.info(">>> START getUpdates >>>");
         log.info("> request body: {}", request);
 
-        // 1. logon
         ServiceResult<LogonResponseDto> svRsLogon = gwIntegrationService.performLogon();
         if (!svRsLogon.isSuccess()) {
             ApiResponse<List<GetUpdatesResponseDto>> failureResponse = responseBuilder.buildFailureResponse(
@@ -90,15 +88,7 @@ public class GwIntegrationController {
         }
 
         final String sessionId = svRsLogon.getData().sessionId();
-        ServiceResult<List<GetUpdatesResponseDto>> serviceResult;
-
-        try {
-            // 2. get updates
-            serviceResult = gwIntegrationService.performGetUpdates(sessionId);
-        } finally {
-            // 3. logout
-            gwIntegrationService.performLogout(sessionId);
-        }
+        ServiceResult<List<GetUpdatesResponseDto>> serviceResult = gwIntegrationService.performGetUpdates(sessionId);
 
         ApiResponse<List<GetUpdatesResponseDto>> finalResponse = serviceResult.isSuccess()
                 ? responseBuilder.buildSuccessResponse(serviceResult.getData(), null, Locale.getDefault())
@@ -120,7 +110,6 @@ public class GwIntegrationController {
             return ResponseEntity.badRequest().body(finalResponse);
         }
 
-        // 1. logon
         ServiceResult<LogonResponseDto> svRsLogon = gwIntegrationService.performLogon();
         if (!svRsLogon.isSuccess()) {
             ApiResponse<SendResponseDto> failureResponse = responseBuilder.buildFailureResponse(
@@ -129,16 +118,8 @@ public class GwIntegrationController {
         }
 
         final String sessionId = svRsLogon.getData().sessionId();
-        ServiceResult<SendResponseDto> srRsSend;
-
-        try {
-            // 2. transform → sign → CDATA wrap → send
-            FinancialTransactionRequest transactionRequest = new FinancialTransactionRequest(sessionId, request.getData().transaction());
-            srRsSend = gwIntegrationService.performSendFinancialTransaction(transactionRequest);
-        } finally {
-            // 3. logout
-            gwIntegrationService.performLogout(sessionId);
-        }
+        FinancialTransactionRequest transactionRequest = new FinancialTransactionRequest(sessionId, request.getData().transaction());
+        ServiceResult<SendResponseDto> srRsSend = gwIntegrationService.performSendFinancialTransaction(transactionRequest);
 
         ApiResponse<SendResponseDto> finalResponse = srRsSend.isSuccess()
                 ? responseBuilder.buildSuccessResponse(srRsSend.getData(), null, Locale.getDefault())
@@ -181,8 +162,6 @@ public class GwIntegrationController {
             return ResponseEntity.badRequest().body(finalResponse);
         }
 
-        // 1. get logon session ID
-        log.info("1. get session ID");
         ServiceResult<LogonResponseDto> svRsLogon = gwIntegrationService.performLogon();
         if (!svRsLogon.isSuccess()) {
             ApiResponse<SendResponseDto> failureResponse = responseBuilder.buildFailureResponse(
@@ -191,18 +170,8 @@ public class GwIntegrationController {
         }
 
         final String sessionId = svRsLogon.getData().sessionId();
-        ServiceResult<SendResponseDto> srRsTransaction;
-
-        try {
-            // 2. perform financial transaction
-            log.info("2. set session ID and perform send");
-            FinancialTransactionRequest transactionRequest = new FinancialTransactionRequest(sessionId, request.getData().transaction());
-            srRsTransaction = gwIntegrationService.performFinancialTransaction(transactionRequest);
-        } finally {
-            // 3. logout session ID
-            log.info("3. finally destroy session");
-            gwIntegrationService.performLogout(sessionId);
-        }
+        FinancialTransactionRequest transactionRequest = new FinancialTransactionRequest(sessionId, request.getData().transaction());
+        ServiceResult<SendResponseDto> srRsTransaction = gwIntegrationService.performFinancialTransaction(transactionRequest);
 
         ApiResponse<SendResponseDto> finalResponse = srRsTransaction.isSuccess()
                 ? responseBuilder.buildSuccessResponse(srRsTransaction.getData(), null, Locale.getDefault())
