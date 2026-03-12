@@ -30,8 +30,8 @@ import java.util.concurrent.locks.ReentrantLock;
 @Slf4j
 public class SessionManager {
 
-    // TODO: replace with the actual gateway fault code(s) for an expired / invalid session
-    private static final Set<String> SESSION_EXPIRED_CODES = Set.of("SESSION_EXPIRED");
+    // Gateway fault code EW1 = "Session not found or closed"
+    private static final Set<String> SESSION_EXPIRED_CODES = Set.of("EW1");
 
     private final GWClientMuRemote soapClient;
     private final CryptoManager cryptoManager;
