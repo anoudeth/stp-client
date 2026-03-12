@@ -2,6 +2,7 @@ package com.noh.stpclient.config;
 
 import com.noh.stpclient.config.interceptor.SoapPayloadLoggingInterceptor;
 import com.noh.stpclient.remote.GWClientMuRemote;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
@@ -10,7 +11,8 @@ import org.springframework.ws.client.support.interceptor.ClientInterceptor;
 @Configuration
 public class SoapClientConfig {
 
-    private static final String TARGET_URL = "http://172.16.2.8:7080/GWClientMUService/GWClientMU";
+    @Value("${stp.soap.url}")
+    private String targetUrl;
 
     @Bean
     public Jaxb2Marshaller marshaller() {
@@ -36,7 +38,7 @@ public class SoapClientConfig {
     @Bean
     public GWClientMuRemote gwClientMuRemote(final Jaxb2Marshaller marshaller) {
         final GWClientMuRemote client = new GWClientMuRemote();
-        client.setDefaultUri(TARGET_URL);
+        client.setDefaultUri(targetUrl);
         client.setMarshaller(marshaller);
         client.setUnmarshaller(marshaller);
         // Register the interceptor to log all outgoing/incoming SOAP messages
