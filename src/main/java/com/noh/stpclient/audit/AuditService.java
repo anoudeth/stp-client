@@ -223,6 +223,69 @@ public class AuditService {
         }
     }
 
+    // -------------------------------------------------------------------------
+    // Two-step audit for performGetUpdates:
+    //   1. recordGetUpdatesBefore — synchronous INSERT (PENDING) before SOAP call
+    //   2. recordGetUpdatesAfter  — reads ThreadLocal then dispatches async UPDATE
+    // -------------------------------------------------------------------------
+
+    /**
+     * Inserts a PENDING audit row for GET_UPDATES before the SOAP call.
+     * Returns the generated audit log ID to pass to {@link #recordGetUpdatesAfter}.
+     */
+    public long recordGetUpdatesBefore(String sessionId) {
+        log.info("[AUDIT] recordGetUpdatesBefore — session={}", sessionId);
+        try {
+            long auditLogId = auditRepository.insertPendingGetUpdates(sessionId);
+            log.info("[AUDIT] PENDING row inserted — auditLogId={}, session={}", auditLogId, sessionId);
+            return auditLogId;
+        } catch (Exception e) {
+            log.error("[AUDIT] recordGetUpdatesBefore failed — session={}: {}", sessionId, e.getMessage(), e);
+            return -1L;
+        }
+    }
+
+    /**
+     * Reads SOAP payloads from the ThreadLocal on the calling thread, then fires an
+     * async UPDATE (with ~3 s delay) to fill in the result fields.
+     */
+    public void recordGetUpdatesAfter(long auditLogId, ServiceResult<?> result) {
+        if (auditLogId < 0) {
+            log.warn("[AUDIT] recordGetUpdatesAfter skipped — auditLogId invalid");
+            return;
+        }
+        log.info("[AUDIT] recordGetUpdatesAfter — auditLogId={}, success={}", auditLogId, result.isSuccess());
+        String soapReq = SoapPayloadLoggingInterceptor.getSoapRequestXml();
+        String soapRes = SoapPayloadLoggingInterceptor.getSoapResponseXml();
+        SoapPayloadLoggingInterceptor.clearSoapPayloads();
+
+        String jsonResponse = toJson(result);
+        log.info("[AUDIT] dispatching async DB update — auditLogId={}, status={}",
+                auditLogId, result.isSuccess() ? "SUCCESS" : "FAILURE");
+        self.persistGetUpdatesResultAsync(auditLogId, result.isSuccess(),
+                result.getErrorCode(), result.getErrorMessage(),
+                jsonResponse, soapReq, soapRes);
+    }
+
+    @Async
+    public void persistGetUpdatesResultAsync(long auditLogId, boolean success,
+                                             String errorCode, String errorMessage,
+                                             String jsonResponse, String soapRequest, String soapResponse) {
+        log.info("[AUDIT] persistGetUpdatesResultAsync start — auditLogId={}, success={}", auditLogId, success);
+        try {
+            Thread.sleep(2000);
+            auditRepository.updateGetUpdatesResult(auditLogId, success, errorCode, errorMessage,
+                    jsonResponse, soapRequest, soapResponse);
+            log.info("[AUDIT] persistGetUpdatesResultAsync complete — auditLogId={}, status={}",
+                    auditLogId, success ? "SUCCESS" : "FAILURE");
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            log.warn("[AUDIT] persistGetUpdatesResultAsync interrupted — auditLogId={}", auditLogId);
+        } catch (Exception e) {
+            log.error("[AUDIT] persistGetUpdatesResultAsync failed — auditLogId={}: {}", auditLogId, e.getMessage(), e);
+        }
+    }
+
     private AuditLog.TransactionDetail buildTxDetailFromRequest(FinancialTransactionRequest request) {
         if (request == null || request.transaction() == null) return null;
         var tx = request.transaction();

@@ -81,6 +81,13 @@ public class AuditRepository {
             WHERE AUDIT_LOG_ID = ?
             """;
 
+    private static final String UPDATE_AUDIT_RESULT = """
+            UPDATE STP_AUDIT_LOG
+            SET STATUS = ?, JSON_RESPONSE = ?, SOAP_REQUEST = ?, SOAP_RESPONSE = ?,
+                ERROR_CODE = ?, ERROR_MESSAGE = ?
+            WHERE ID = ?
+            """;
+
     private final JdbcTemplate jdbcTemplate;
 
     /**
@@ -174,6 +181,47 @@ public class AuditRepository {
                 respType, respDt, respMir, respRef,
                 auditLogId
         );
+    }
+
+    /**
+     * Inserts a PENDING audit row for GET_UPDATES before the SOAP call.
+     * Returns the generated STP_AUDIT_LOG ID for use in {@link #updateGetUpdatesResult}.
+     */
+    @Transactional
+    public long insertPendingGetUpdates(String sessionId) {
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(INSERT_PENDING_SEND_AUDIT, new String[]{"ID"});
+            ps.setString   (1, AuditLog.Operation.GET_UPDATES.name());
+            ps.setString   (2, sessionId);
+            ps.setString   (3, null);
+            ps.setString   (4, STATUS_PENDING);
+            ps.setTimestamp(5, Timestamp.valueOf(LocalDateTime.now()));
+            return ps;
+        }, keyHolder);
+        return Objects.requireNonNull(keyHolder.getKey()).longValue();
+    }
+
+    /**
+     * Updates the PENDING audit row to SUCCESS/FAILURE after the SOAP call completes.
+     */
+    @Transactional
+    public void updateGetUpdatesResult(long auditLogId, boolean success,
+                                       String errorCode, String errorMessage,
+                                       String jsonResponse, String soapRequest, String soapResponse) {
+        String status = success ? STATUS_SUCCESS : STATUS_FAILURE;
+        jdbcTemplate.update(connection -> {
+            OracleConnection oc = connection.unwrap(OracleConnection.class);
+            PreparedStatement ps = connection.prepareStatement(UPDATE_AUDIT_RESULT);
+            ps.setString(1, status);
+            ps.setClob  (2, toClob(oc, jsonResponse));
+            ps.setClob  (3, toClob(oc, soapRequest));
+            ps.setClob  (4, toClob(oc, soapResponse));
+            ps.setString(5, success ? null : errorCode);
+            ps.setString(6, success ? null : truncate(errorMessage, 500));
+            ps.setLong  (7, auditLogId);
+            return ps;
+        });
     }
 
     public void save(AuditLog auditLog) {

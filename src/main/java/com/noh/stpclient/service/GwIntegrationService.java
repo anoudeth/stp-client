@@ -104,6 +104,10 @@ public class GwIntegrationService {
 
     public ServiceResult<List<GetUpdatesResponseDto>> performGetUpdates(String sessionId) {
         Assert.hasText(sessionId, "Session ID must not be empty");
+
+        // 1. Insert PENDING audit row before SOAP call (non-blocking)
+        long auditLogId = auditService.recordGetUpdatesBefore(sessionId);
+
         ServiceResult<List<GetUpdatesResponseDto>> result;
         try {
             GetUpdatesResponse response = soapClient.getUpdates(sessionId);
@@ -121,7 +125,9 @@ public class GwIntegrationService {
             log.error("GetUpdates failed for session: {}", sessionId, e);
             result = ServiceResult.failure("GW-999", "Gateway GetUpdates Failed");
         }
-        auditService.record(AuditLog.Operation.GET_UPDATES, sessionId, sessionId, result);
+
+        // 2. Async UPDATE with ~3 s delay — does not block the response
+        auditService.recordGetUpdatesAfter(auditLogId, result);
         return result;
     }
 
