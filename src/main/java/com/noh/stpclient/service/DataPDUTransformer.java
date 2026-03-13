@@ -73,7 +73,7 @@ public class DataPDUTransformer {
         appHdr.setTo(to);
         
         appHdr.setBizMsgIdr(transaction.businessMessageId());
-        appHdr.setMsgDefIdr("pacs.008.001.08");
+        appHdr.setMsgDefIdr("pacs.009.001.08");
         appHdr.setBizSvc("RTGS");
         appHdr.setCreDt(currentDateTime);
         

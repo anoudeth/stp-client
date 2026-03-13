@@ -40,7 +40,7 @@ public class GwIntegrationService {
     private final AuditService auditService;
     private final SessionManager sessionManager;
 
-    private static final String RTGS_MSG_TYPE = "pacs.008.001.08";
+    private static final String RTGS_MSG_TYPE = "pacs.009.001.08";
     private static final String RTGS_FORMAT   = "MX";
 
     @Value("${stp.soap.rtgs-receiver}")

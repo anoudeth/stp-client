@@ -15,7 +15,7 @@ import java.util.List;
  * @param transaction The financial transaction data.
  */
 public record FinancialTransactionRequest(
-        @NotBlank(message = "Session ID cannot be blank")
+//        @NotBlank(message = "Session ID cannot be blank")
         String sessionId,
         @NotNull(message = "Transaction data cannot be null")
         @Valid

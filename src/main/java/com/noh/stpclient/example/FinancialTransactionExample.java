@@ -123,7 +123,7 @@ public class FinancialTransactionExample {
         msg.setBlock4(signedXml);
         msg.setMsgReceiver(request.transaction().receiverBic());
         msg.setMsgSender(request.transaction().senderBic());
-        msg.setMsgType("pacs.008.001.08");
+        msg.setMsgType("pacs.009.001.08");
         msg.setMsgSequence(request.transaction().msgSequence());
         msg.setFormat("MX");
         send.setMessage(msg);
