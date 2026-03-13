@@ -40,6 +40,9 @@ public class GwIntegrationService {
     private final AuditService auditService;
     private final SessionManager sessionManager;
 
+    private static final String RTGS_MSG_TYPE = "pacs.008.001.08";
+    private static final String RTGS_FORMAT   = "MX";
+
     @Value("${stp.soap.rtgs-receiver}")
     private String rtgsMsgReceiver;
 
@@ -315,9 +318,9 @@ public class GwIntegrationService {
         soapMessage.setBlock4(signedXmlContent);
         soapMessage.setMsgReceiver(rtgsMsgReceiver);
         soapMessage.setMsgSender(request.transaction().senderBic());
-        soapMessage.setMsgType("pacs.008.001.08");
+        soapMessage.setMsgType(RTGS_MSG_TYPE);
         soapMessage.setMsgSequence(request.transaction().msgSequence());
-        soapMessage.setFormat("MX");
+        soapMessage.setFormat(RTGS_FORMAT);
         soapRequest.setMessage(soapMessage);
 
         SendResponse response = soapClient.send(soapRequest);
@@ -339,9 +342,9 @@ public class GwIntegrationService {
         msg.setBlock4(signedXml);
         msg.setMsgReceiver(rtgsMsgReceiver);
         msg.setMsgSender(request.transaction().senderBic());
-        msg.setMsgType("pacs.008.001.08");
+        msg.setMsgType(RTGS_MSG_TYPE);
         msg.setMsgSequence(request.transaction().msgSequence());
-        msg.setFormat("MX");
+        msg.setFormat(RTGS_FORMAT);
         soapRequest.setMessage(msg);
         return soapRequest;
     }
