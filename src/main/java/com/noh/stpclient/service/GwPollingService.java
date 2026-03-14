@@ -87,7 +87,7 @@ public class GwPollingService {
             log.info("{} ── END | elapsed={}s ──────────────────────", tag, totalElapsed);
             // Always release the lock so the next cycle can run
             running.set(false);
-            // Schedule countdown: next poll fires after POLL_DELAY_SECONDS from now
+            // Set reference time so countdown() knows when next poll is expected
             nextPollAt = Instant.now().plusSeconds(POLL_DELAY_SECONDS);
         }
     }
