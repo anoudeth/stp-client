@@ -31,5 +31,6 @@ WORKDIR /usr/apps
 COPY target/*.jar ./
 RUN mkdir ./config_props
 COPY src/main/resources/* ./config_props
+COPY key/ ./key/
 
 ENTRYPOINT ["java", "-jar", "stp-client.jar", "--spring.config.location=./config_props/application.yml"]
