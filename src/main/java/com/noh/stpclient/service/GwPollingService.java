@@ -10,6 +10,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -75,19 +76,19 @@ public class GwPollingService {
                 Instant ackStart = Instant.now();
                 SendAckNakRequest ackRequest = new SendAckNakRequest("ACK", item.msgNetInputTime(), item.msgNetMir());
                 ServiceResult<Void> ackResult = gwIntegrationService.performSendAckNak(ackRequest);
-                long ackElapsed = Instant.now().getEpochSecond() - ackStart.getEpochSecond();
+                long ackElapsed = Duration.between(ackStart, Instant.now()).toMillis();
 
                 if (ackResult.isSuccess()) {
-                    log.info("{} sendAckNak OK  | MIR={} | {}s", tag, item.msgNetMir(), ackElapsed);
+                    log.info("{} sendAckNak OK  | MIR={} | {}ms", tag, item.msgNetMir(), ackElapsed);
                 } else {
-                    log.warn("{} sendAckNak FAIL| MIR={} | code={} msg={} | {}s",
+                    log.warn("{} sendAckNak FAIL| MIR={} | code={} msg={} | {}ms",
                             tag, item.msgNetMir(), ackResult.getErrorCode(), ackResult.getErrorMessage(), ackElapsed);
                 }
             }
 
         } finally {
-            long totalElapsed = Instant.now().getEpochSecond() - pollStart.getEpochSecond();
-            log.info("{} ── END | elapsed={}s ──────────────────────", tag, totalElapsed);
+            long totalElapsed = Duration.between(pollStart, Instant.now()).toMillis();
+            log.info("{} ── END | elapsed={}ms ──────────────────────", tag, totalElapsed);
             // Always release the lock so the next cycle can run
             running.set(false);
             // Set reference time so countdown() knows when next poll is expected
