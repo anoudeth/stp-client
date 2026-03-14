@@ -21,8 +21,8 @@ import java.util.concurrent.atomic.AtomicLong;
 @ConditionalOnProperty(name = "stp.polling.enabled", havingValue = "true", matchIfMissing = true)
 public class GwPollingService {
 
-    @Value("${stp.polling.delay-seconds:6000}")
-    private long pollDelaySeconds;
+    @Value("${stp.polling.delay-ms:55000}")
+    private long pollDelayMs;
 
     private final GwIntegrationService gwIntegrationService;
     private final SessionManager sessionManager;
@@ -36,7 +36,7 @@ public class GwPollingService {
     // Tracks when the next poll is scheduled to start (set after each poll completes)
     private volatile Instant nextPollAt = null;
 
-    @Scheduled(fixedDelayString = "#{${stp.polling.delay-seconds:6000} * 1000}")
+    @Scheduled(fixedDelayString = "${stp.polling.delay-ms:55000}")
     public void poll() {
         // Skip if previous poll is still in progress
         if (!running.compareAndSet(false, true)) {
@@ -91,7 +91,7 @@ public class GwPollingService {
             // Always release the lock so the next cycle can run
             running.set(false);
             // Set reference time so countdown() knows when next poll is expected
-            nextPollAt = Instant.now().plusSeconds(pollDelaySeconds);
+            nextPollAt = Instant.now().plusMillis(pollDelayMs);
         }
     }
 

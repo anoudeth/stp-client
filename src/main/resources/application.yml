@@ -1,8 +1,3 @@
-stp:
-  polling:
-    enabled: false
-    delay-seconds: 55
-
 spring:
   application:
     name: stp-client
@@ -22,3 +17,8 @@ server:
 logging:
   level:
     com.noh.stpclient.config.interceptor: DEBUG
+
+stp:
+  polling:
+    enabled: false
+    delay-ms: 55000
