@@ -5,6 +5,8 @@ import com.noh.stpclient.web.dto.GetUpdatesResponseDto;
 import com.noh.stpclient.web.dto.SendAckNakRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -16,9 +18,11 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "stp.polling.enabled", havingValue = "true", matchIfMissing = true)
 public class GwPollingService {
 
-    private static final int POLL_DELAY_SECONDS = 6000;
+    @Value("${stp.polling.delay-seconds:6000}")
+    private long pollDelaySeconds;
 
     private final GwIntegrationService gwIntegrationService;
     private final SessionManager sessionManager;
@@ -32,8 +36,7 @@ public class GwPollingService {
     // Tracks when the next poll is scheduled to start (set after each poll completes)
     private volatile Instant nextPollAt = null;
 
-    // Runs every 55 seconds after the previous execution completes
-    @Scheduled(fixedDelay = POLL_DELAY_SECONDS * 1000)
+    @Scheduled(fixedDelayString = "#{${stp.polling.delay-seconds:6000} * 1000}")
     public void poll() {
         // Skip if previous poll is still in progress
         if (!running.compareAndSet(false, true)) {
@@ -88,7 +91,7 @@ public class GwPollingService {
             // Always release the lock so the next cycle can run
             running.set(false);
             // Set reference time so countdown() knows when next poll is expected
-            nextPollAt = Instant.now().plusSeconds(POLL_DELAY_SECONDS);
+            nextPollAt = Instant.now().plusSeconds(pollDelaySeconds);
         }
     }
 

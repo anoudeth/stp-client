@@ -1,3 +1,8 @@
+stp:
+  polling:
+    enabled: false
+    delay-seconds: 55
+
 spring:
   application:
     name: stp-client
