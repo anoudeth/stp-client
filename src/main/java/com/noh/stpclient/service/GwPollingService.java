@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @RequiredArgsConstructor
 public class GwPollingService {
 
-    private static final int POLL_DELAY_SECONDS = 55;
+    private static final int POLL_DELAY_SECONDS = 6000;
 
     private final GwIntegrationService gwIntegrationService;
     private final SessionManager sessionManager;
