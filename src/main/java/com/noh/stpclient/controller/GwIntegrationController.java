@@ -12,6 +12,11 @@ import com.noh.stpclient.web.dto.LogonResponseDto;
 import com.noh.stpclient.web.dto.LogoutRequest;
 import com.noh.stpclient.web.dto.SendResponseDto;
 import com.noh.stpclient.web.dto.SendAckNakRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -28,11 +33,18 @@ import java.util.Locale;
 @RequestMapping("/gw")
 @Slf4j
 @AllArgsConstructor
+@Tag(name = "Gateway Integration", description = "Endpoints for interacting with the SWIFT GWClientMU gateway: session management, message updates, financial transactions, and ACK/NAK processing.")
 public class GwIntegrationController {
 
     private final GwIntegrationService gwIntegrationService;
     private final ApiResponseBuilder responseBuilder;
 
+    @Operation(summary = "Logon to gateway", description = "Authenticates with the SWIFT gateway using configured credentials and returns a session ID.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Logon successful or failed (check resStatus in body)",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Request data is null or invalid")
+    })
     @PostMapping("/logon")
     public ResponseEntity<ApiResponse<LogonResponseDto>> logon(@Valid @RequestBody ApiRequest<LogonRequest> request) {
         log.info(">>> START logon >>>");
@@ -54,6 +66,12 @@ public class GwIntegrationController {
         return ResponseEntity.ok(finalResponse);
     }
 
+    @Operation(summary = "Logout from gateway", description = "Terminates the current gateway session identified by the provided session ID.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Logout successful or failed (check resStatus in body)",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Request data is null or invalid")
+    })
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(@Valid @RequestBody ApiRequest<LogoutRequest> request) {
         log.info(">>> START logout >>>");
@@ -75,6 +93,11 @@ public class GwIntegrationController {
         return ResponseEntity.ok(finalResponse);
     }
 
+    @Operation(summary = "Get message updates", description = "Authenticates with the gateway, polls for pending inbound SWIFT messages, and returns them as a list. Each item contains full message metadata and block4 content.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Update list returned (may be empty if no pending messages)",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class)))
+    })
     @PostMapping("/get-updates")
     public ResponseEntity<ApiResponse<List<GetUpdatesResponseDto>>> getUpdates(@Valid @RequestBody ApiRequest<Void> request) {
         log.info(">>> START getUpdates >>>");
@@ -99,6 +122,12 @@ public class GwIntegrationController {
         return ResponseEntity.ok(finalResponse);
     }
 
+    @Operation(summary = "Send financial transaction", description = "Authenticates with the gateway and submits a SWIFT financial transaction (pacs.008 / RTGS). Returns the gateway's acknowledgment including MIR and reference code.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Transaction submitted (check resStatus; SUCCESS means gateway accepted)",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Request data is null or validation failed")
+    })
     @PostMapping("/send")
     public ResponseEntity<ApiResponse<SendResponseDto>> send(@Valid @RequestBody ApiRequest<FinancialTransactionRequest> request) {
         log.info(">>> START send >>>");
@@ -130,6 +159,12 @@ public class GwIntegrationController {
         return ResponseEntity.ok(finalResponse);
     }
 
+    @Operation(summary = "Send ACK or NAK", description = "Sends an acknowledgment (ACK) or negative acknowledgment (NAK) for a received SWIFT message identified by its MIR and datetime. Session is managed internally.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "ACK/NAK sent successfully or failed (check resStatus in body)",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Request data is null or type is not ACK/NAK")
+    })
     @PostMapping("/send-ack-nak")
     public ResponseEntity<ApiResponse<Void>> sendAckNak(@Valid @RequestBody ApiRequest<SendAckNakRequest> request) {
         log.info(">>> START sendAckNak >>>");
@@ -151,6 +186,12 @@ public class GwIntegrationController {
         return ResponseEntity.ok(finalResponse);
     }
 
+    @Operation(summary = "Submit financial transaction (full flow)", description = "End-to-end financial transaction submission: authenticates with the gateway, builds the SWIFT message, and sends it. Equivalent to /gw/send but uses the full transaction processing pipeline.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Transaction processed (check resStatus for gateway result)",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Request data is null or validation failed")
+    })
     @PostMapping("/financial-transaction")
     public ResponseEntity<ApiResponse<SendResponseDto>> financialTransaction(@Valid @RequestBody ApiRequest<FinancialTransactionRequest> request) {
         log.info(">>> START financialTransaction >>>");
