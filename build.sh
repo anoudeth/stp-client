@@ -36,12 +36,16 @@ case "$ENV" in
     TAG="${REGISTRY}:dev-${SHORT_HASH}"
     ;;
   uat)
-    VERSION=$(git describe --tags --abbrev=0)
+    VERSION=$(git describe --tags --abbrev=0 2>/dev/null) \
+      || error "No git tag found. Tag a commit first: git tag v1.0.0"
     TAG="${REGISTRY}:uat-${VERSION}"
     ;;
   prod)
-    VERSION=$(git describe --tags --abbrev=0)
+    VERSION=$(git describe --tags --abbrev=0 2>/dev/null) \
+      || error "No git tag found. Tag a commit first: git tag v1.0.0"
     TAG="${REGISTRY}:${VERSION}"
+    read -rp "Push ${TAG} to PRODUCTION? [y/N] " confirm
+    [[ "$confirm" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 0; }
     ;;
   *)
     error "Invalid environment '${ENV}'. Use dev, uat, or prod."
@@ -52,7 +56,7 @@ esac
 #  Build steps
 # ─────────────────────────────────────────────
 info "Switch to Java 21"
-j21
+source ~/.j21
 
 info "Java & Maven versions"
 java -version
