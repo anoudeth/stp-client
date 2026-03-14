@@ -10,9 +10,6 @@ import com.noh.stpclient.web.dto.SendRequest;
 import com.noh.stpclient.web.dto.SendResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 /**
@@ -36,12 +33,7 @@ public class AuditService {
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     private final AuditRepository auditRepository;
-
-    // Self-injection via proxy: calling persistAsync() on 'this' bypasses Spring AOP,
-    // so @Async would not apply. Using the proxy reference ensures the async behaviour works.
-    @Lazy
-    @Autowired
-    private AuditService self;
+    private final AsyncAuditPersister asyncAuditPersister;
 
     /**
      * Called synchronously by GwIntegrationService immediately after each audited operation.
@@ -105,50 +97,10 @@ public class AuditService {
         }
 
         log.info("[AUDIT] dispatching async save — operation={}, session={}", operation, sessionId);
-        // Fire-and-forget: call through proxy so @Async is applied — no ThreadLocal dependency in async thread
-        self.persistAsync(operation, sessionId, jsonRequest, jsonResponse,
+        asyncAuditPersister.persistAsync(operation, sessionId, jsonRequest, jsonResponse,
                 soapReq, soapRes,
                 result.isSuccess(), result.getErrorCode(), result.getErrorMessage(),
                 txDetail);
-    }
-
-    /**
-     * Runs on Spring's async executor. Builds and saves the AuditLog.
-     * All exceptions are caught and logged; audit failures never affect the caller.
-     */
-    @Async
-    public void persistAsync(AuditLog.Operation operation,
-                             String sessionId,
-                             String jsonRequest,
-                             String jsonResponse,
-                             String soapRequest,
-                             String soapResponse,
-                             boolean success,
-                             String errorCode,
-                             String errorMessage,
-                             AuditLog.TransactionDetail txDetail) {
-        log.info("[AUDIT] persistAsync start — operation={}, session={}, success={}", operation, sessionId, success);
-        try {
-            AuditLog.AuditLogBuilder builder = AuditLog.builder()
-                    .operation(operation)
-                    .sessionId(sessionId)
-                    .jsonRequest(jsonRequest)
-                    .jsonResponse(jsonResponse)
-                    .soapRequest(soapRequest)
-                    .soapResponse(soapResponse)
-                    .success(success)
-                    .errorCode(success ? null : errorCode)
-                    .errorMessage(success ? null : errorMessage);
-
-            if (txDetail != null) {
-                builder.txnDetail(txDetail);
-            }
-
-            auditRepository.save(builder.build());
-            log.info("[AUDIT] persistAsync complete — operation={}, session={}", operation, sessionId);
-        } catch (Exception e) {
-            log.error("[AUDIT] persistAsync failed — operation={}, session={}: {}", operation, sessionId, e.getMessage(), e);
-        }
     }
 
     // -------------------------------------------------------------------------
@@ -197,30 +149,9 @@ public class AuditService {
 
         log.info("[AUDIT] dispatching async DB update — auditLogId={}, status={}",
                 auditLogId, result.isSuccess() ? "SUCCESS" : "FAILURE");
-        // Call through proxy so @Async is applied
-        self.persistSendResultAsync(auditLogId, result.isSuccess(),
+        asyncAuditPersister.persistSendResultAsync(auditLogId, result.isSuccess(),
                 result.getErrorCode(), result.getErrorMessage(),
                 jsonResponse, soapReq, soapRes, responseFields);
-    }
-
-    @Async
-    public void persistSendResultAsync(long auditLogId, boolean success,
-                                       String errorCode, String errorMessage,
-                                       String jsonResponse, String soapRequest, String soapResponse,
-                                       AuditLog.TransactionDetail responseFields) {
-        log.info("[AUDIT] persistSendResultAsync start — auditLogId={}, success={}", auditLogId, success);
-        try {
-            Thread.sleep(2000);
-            auditRepository.updateSendResult(auditLogId, success, errorCode, errorMessage,
-                    jsonResponse, soapRequest, soapResponse, responseFields);
-            log.info("[AUDIT] persistSendResultAsync complete — auditLogId={}, status={}",
-                    auditLogId, success ? "SUCCESS" : "FAILURE");
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-            log.warn("[AUDIT] persistSendResultAsync interrupted — auditLogId={}", auditLogId);
-        } catch (Exception e) {
-            log.error("[AUDIT] persistSendResultAsync failed — auditLogId={}: {}", auditLogId, e.getMessage(), e);
-        }
     }
 
     // -------------------------------------------------------------------------
@@ -247,7 +178,7 @@ public class AuditService {
 
     /**
      * Reads SOAP payloads from the ThreadLocal on the calling thread, then fires an
-     * async UPDATE (with ~3 s delay) to fill in the result fields.
+     * async UPDATE to fill in the result fields.
      */
     public void recordGetUpdatesAfter(long auditLogId, ServiceResult<?> result) {
         if (auditLogId < 0) {
@@ -262,28 +193,9 @@ public class AuditService {
         String jsonResponse = toJson(result);
         log.info("[AUDIT] dispatching async DB update — auditLogId={}, status={}",
                 auditLogId, result.isSuccess() ? "SUCCESS" : "FAILURE");
-        self.persistGetUpdatesResultAsync(auditLogId, result.isSuccess(),
+        asyncAuditPersister.persistGetUpdatesResultAsync(auditLogId, result.isSuccess(),
                 result.getErrorCode(), result.getErrorMessage(),
                 jsonResponse, soapReq, soapRes);
-    }
-
-    @Async
-    public void persistGetUpdatesResultAsync(long auditLogId, boolean success,
-                                             String errorCode, String errorMessage,
-                                             String jsonResponse, String soapRequest, String soapResponse) {
-        log.info("[AUDIT] persistGetUpdatesResultAsync start — auditLogId={}, success={}", auditLogId, success);
-        try {
-            Thread.sleep(2000);
-            auditRepository.updateGetUpdatesResult(auditLogId, success, errorCode, errorMessage,
-                    jsonResponse, soapRequest, soapResponse);
-            log.info("[AUDIT] persistGetUpdatesResultAsync complete — auditLogId={}, status={}",
-                    auditLogId, success ? "SUCCESS" : "FAILURE");
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-            log.warn("[AUDIT] persistGetUpdatesResultAsync interrupted — auditLogId={}", auditLogId);
-        } catch (Exception e) {
-            log.error("[AUDIT] persistGetUpdatesResultAsync failed — auditLogId={}: {}", auditLogId, e.getMessage(), e);
-        }
     }
 
     private AuditLog.TransactionDetail buildTxDetailFromRequest(FinancialTransactionRequest request) {
