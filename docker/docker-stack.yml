@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  stp-client:
+    image: 172.16.4.62:5000/stp-client:dev-6d75fa7
+    networks:
+      - stp-net
+    ports:
+      - target: 7003
+        published: 7003
+        protocol: tcp
+        mode: host
+    secrets:
+      - source: stp-keystore
+        target: /usr/apps/key/LBBCLALABXXX.pfx
+    volumes:
+      - type: bind
+        source: /Users/nohder/dev/docker/app/stp-client/config_props
+        target: /usr/apps/config_props
+      - type: bind
+        source: /Users/nohder/dev/docker/app/stp-client/logs
+        target: /usr/apps/logs
+    environment:
+      - TZ=Asia/Bangkok
+    command:
+      - java
+      - -jar
+      - stp-client.jar
+      - --spring.config.location=./config_props/application.yml
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7003/stp-client/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 15s
+        failure_action: rollback
+        order: stop-first
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+      placement:
+        constraints:
+          - node.role == manager
+
+networks:
+  stp-net:
+    driver: overlay
+    attachable: true
+
+secrets:
+  stp-keystore:
+    external: true
+    name: LBBCLALABXXX.pfx

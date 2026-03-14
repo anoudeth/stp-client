@@ -35,5 +35,6 @@ build/
 ### VS Code ###
 .vscode/
 /logs/
+/docker/logs/
 /STPG_MU_WebServices .pdf
 /key/
