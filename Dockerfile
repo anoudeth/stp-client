@@ -5,7 +5,7 @@ RUN apk add --no-cache binutils
 
 #--- Build minimal JRE with only required modules
 RUN $JAVA_HOME/bin/jlink \
-         --add-modules java.base,java.logging,java.xml,java.sql,java.naming,java.desktop,java.management,java.security.jgss,java.instrument,jdk.unsupported \
+         --add-modules java.base,java.logging,java.xml,java.xml.crypto,java.sql,java.naming,java.desktop,java.management,java.security.jgss,java.instrument,jdk.unsupported \
          --strip-debug \
          --no-man-pages \
          --no-header-files \
@@ -32,4 +32,4 @@ COPY target/*.jar ./
 RUN mkdir ./config_props
 COPY src/main/resources/* ./config_props
 
-ENTRYPOINT ["java", "-jar", "stp-client.jar", "--spring.config.location=./config_props/application.properties"]
+ENTRYPOINT ["java", "-jar", "stp-client.jar", "--spring.config.location=./config_props/application.yml"]
