@@ -54,7 +54,7 @@ When you receive a new `LBBCLALABXXX.pfx`, follow these steps:
 
 **1. Replace the file**
 ```bash
-cp /path/to/new/LBBCLALABXXX.pfx /Users/nohder/dev/docker/app/stp-client/key/LBBCLALABXXX.pfx
+cp /path/to/new/LBBCLALABXXX.pfx /Users/nohder/dev/lbb/stp-client/docker/key/LBBCLALABXXX.pfx
 ```
 
 **2. Detach secret from service**
@@ -69,12 +69,12 @@ docker secret rm LBBCLALABXXX.pfx
 
 **4. Create new secret**
 ```bash
-docker secret create LBBCLALABXXX.pfx /Users/nohder/dev/docker/app/stp-client/key/LBBCLALABXXX.pfx
+docker secret create LBBCLALABXXX.pfx /Users/nohder/dev/lbb/stp-client/docker/key/LBBCLALABXXX.pfx
 ```
 
 **5. Redeploy**
 ```bash
-docker stack deploy -c /Users/nohder/dev/docker/app/stp-client/docker-stack.yml stp
+docker stack deploy -c /Users/nohder/dev/lbb/stp-client/docker/docker-stack.yml stp
 ```
 
 ---

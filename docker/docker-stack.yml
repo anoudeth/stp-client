@@ -15,10 +15,10 @@ services:
         target: /usr/apps/key/LBBCLALABXXX.pfx
     volumes:
       - type: bind
-        source: /Users/nohder/dev/docker/app/stp-client/config_props
+        source: /Users/nohder/dev/lbb/stp-client/docker/config_props
         target: /usr/apps/config_props
       - type: bind
-        source: /Users/nohder/dev/docker/app/stp-client/logs
+        source: /Users/nohder/dev/lbb/stp-client/docker/logs
         target: /usr/apps/logs
     environment:
       - TZ=Asia/Bangkok
