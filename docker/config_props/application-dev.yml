@@ -1,0 +1,29 @@
+stp:
+  soap:
+#    url: http://tmsxuat.bolnet.gov.la:7080/GWClientMUService/GWClientMU
+    url: http://172.16.2.8:7080/GWClientMUService/GWClientMU
+    username: LBBCLALABXXX
+    password: lbb@2026
+    rtgs-receiver: LPDRLALAXATS
+
+ks:
+  type: PKCS12
+  pass: 2wsx@WSX
+  alias: te-c44b72d1-77d0-4664-bb5c-a61eaa6fe971
+  path: key/LBBCLALABXXX.pfx  # Relative to project root
+
+gw:
+  cert:
+    alias: gw-cert  # Import gateway cert into LBBCLALABXXX.pfx with: keytool -importcert -keystore key/LBBCLALABXXX.pfx -storetype PKCS12 -storepass 2wsx@WSX -alias gw-cert -file gateway.cer
+
+spring:
+  datasource:
+    url: jdbc:oracle:thin:@10.10.200.33:1523:bnpldb
+    username: msmartuat
+    password: msmartuat
+    driver-class-name: oracle.jdbc.OracleDriver
+    hikari:
+      pool-name: StpAuditPool
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-test-query: SELECT 1 FROM DUAL

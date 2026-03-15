@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: stp-client
+  profiles:
+    active: dev
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false
+server:
+  port: 7003
+  servlet:
+    context-path: /stp-client
+  error:
+    include-message: always
+logging:
+  level:
+    com.noh.stpclient.config.interceptor: DEBUG
+
+stp:
+  polling:
+    enabled: false
+    delay-ms: 55000
