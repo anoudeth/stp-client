@@ -95,6 +95,57 @@ docker stack deploy -c /Users/nohder/dev/docker/app/stp-client/docker-stack.yml 
 
 ---
 
+## Monitoring
+
+### 1. Check Service Status
+```bash
+docker service ls
+```
+`REPLICAS 1/1` = healthy. `0/1` = container is down or restarting.
+
+### 2. Check Task History + Errors
+```bash
+docker service ps stp_stp-client
+```
+Past failed tasks appear with `\_` prefix — useful to see crash history and error messages.
+
+### 3. Live Logs
+```bash
+docker service logs -f stp_stp-client
+
+# Last 100 lines only
+docker service logs -f --tail 100 stp_stp-client
+```
+
+### 4. Health Check Detail
+```bash
+# Get container ID first
+docker ps
+
+# Inspect health check results
+docker inspect --format='{{json .State.Health}}' <container_id> | jq
+```
+Shows each health check result with timestamp, exit code, and actuator response.
+
+### 5. Auto-Refresh Status (keep open after deploy)
+```bash
+watch -n 5 docker service ps stp_stp-client
+```
+
+### Health Check Timing (from docker-stack.yml)
+
+```
+t=0s    Container starts
+t=0-60s start_period — failures are ignored (app is booting)
+t=30s   Check #1  (ignored if fail)
+t=60s   Check #2  start_period ends
+t=90s   Check #3  fail #1 counted
+t=120s  Check #4  fail #2 counted
+t=150s  Check #5  fail #3 counted → marked UNHEALTHY → Swarm restarts
+```
+
+---
+
 ## Useful Commands
 
 ```bash
