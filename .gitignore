@@ -38,3 +38,7 @@ build/
 /docker/logs/
 /STPG_MU_WebServices .pdf
 /key/
+
+### Claude Code ###
+.claude/settings.local.json
+.claude/worktrees/

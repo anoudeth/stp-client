@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claude Code Workflow Cheatsheet – STP Client</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #fdf8f3;
+      color: #1a1a1a;
+      font-size: 12px;
+      padding: 20px;
+    }
+
+    /* ── HEADER ── */
+    header {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    header h1 {
+      font-size: 36px;
+      font-weight: 900;
+      color: #1a1a1a;
+      letter-spacing: -1px;
+    }
+    header h1 span { color: #e07b2a; }
+    header p {
+      font-size: 12px;
+      color: #555;
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    /* ── GRID ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: #fff;
+      border: 1.5px solid #e8ddd0;
+      border-radius: 10px;
+      padding: 14px;
+      position: relative;
+    }
+    .card.span2 { grid-column: span 2; }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .card-title .num {
+      background: #1a1a1a;
+      color: #fff;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .card-title .num.orange { background: #e07b2a; }
+
+    /* ── CODE BLOCKS ── */
+    pre, .code-block {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 10.5px;
+      line-height: 1.6;
+      margin: 6px 0;
+      overflow-x: auto;
+    }
+    .code-block .comment { color: #6c7086; }
+    .code-block .key { color: #89b4fa; }
+    .code-block .val { color: #a6e3a1; }
+    .code-block .str { color: #f38ba8; }
+    .code-block .hl  { color: #fab387; }
+
+    /* ── INLINE CODE ── */
+    code {
+      background: #f0ebe3;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 10.5px;
+      color: #c0392b;
+    }
+
+    /* ── TAGS ── */
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      margin: 2px 2px 2px 0;
+    }
+    .tag.orange { background: #e07b2a; color: #fff; }
+    .tag.dark   { background: #1a1a1a; color: #fff; }
+    .tag.light  { background: #f0ebe3; color: #555; border: 1px solid #ddd; }
+    .tag.green  { background: #27ae60; color: #fff; }
+    .tag.red    { background: #e74c3c; color: #fff; }
+
+    /* ── LABELS (WHAT / WHY / HOW) ── */
+    .label-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .lbl {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 4px;
+    }
+    .lbl.what { background: #e07b2a; color: #fff; }
+    .lbl.why  { background: #1a1a1a; color: #fff; }
+    .lbl.how  { background: #fff; color: #1a1a1a; border: 1.5px solid #1a1a1a; }
+
+    /* ── LISTS ── */
+    ul.checklist { list-style: none; padding: 0; }
+    ul.checklist li { padding: 2px 0; padding-left: 16px; position: relative; font-size: 11px; }
+    ul.checklist li::before { content: "○"; position: absolute; left: 0; color: #e07b2a; font-size: 10px; }
+    ul.checklist li.x::before { content: "✗"; color: #e74c3c; }
+
+    ul.dotlist { list-style: none; padding: 0; }
+    ul.dotlist li { padding: 3px 0; padding-left: 14px; position: relative; font-size: 11px; line-height: 1.5; }
+    ul.dotlist li::before { content: "→"; position: absolute; left: 0; color: #e07b2a; font-size: 10px; }
+
+    /* ── FILE TREE ── */
+    .tree {
+      font-family: 'Courier New', monospace;
+      font-size: 10.5px;
+      line-height: 1.8;
+      background: #fdf8f3;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #e8ddd0;
+    }
+    .tree .folder { color: #e07b2a; font-weight: 700; }
+    .tree .file   { color: #1a1a1a; }
+    .tree .note   { color: #888; font-style: italic; }
+
+    /* ── SECTION WITHIN CARD ── */
+    .section-title {
+      font-weight: 700;
+      font-size: 11px;
+      margin: 8px 0 4px;
+      color: #333;
+    }
+    .section-title.orange { color: #e07b2a; }
+
+    /* ── FLOW STEPS ── */
+    .flow-step {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      border-radius: 6px;
+      padding: 6px 12px;
+      margin: 4px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      text-align: center;
+    }
+    .flow-step.orange-bg { background: #e07b2a; color: #fff; font-weight: 700; }
+    .flow-step.light-bg  { background: #f0ebe3; color: #1a1a1a; }
+    .flow-arrow {
+      text-align: center;
+      font-size: 14px;
+      color: #e07b2a;
+      line-height: 1;
+      margin: 1px 0;
+    }
+
+    /* ── LAYER BOX ── */
+    .layer {
+      border: 1.5px solid #e8ddd0;
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin: 5px 0;
+    }
+    .layer .layer-title { font-weight: 800; font-size: 11px; }
+    .layer .layer-sub   { font-size: 10px; color: #777; margin-top: 1px; }
+
+    /* ── TABLE ── */
+    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    th { background: #1a1a1a; color: #fff; padding: 5px 8px; text-align: left; }
+    td { padding: 4px 8px; border-bottom: 1px solid #eee; }
+    tr:nth-child(even) td { background: #fdf8f3; }
+
+    /* ── DIVIDER ── */
+    hr { border: none; border-top: 1px solid #e8ddd0; margin: 8px 0; }
+
+    /* ── INLINE PILL ── */
+    .pill {
+      display: inline-block;
+      background: #f0ebe3;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 1px 8px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .pill.orange { background: #fff3e8; border-color: #e07b2a; color: #e07b2a; }
+
+    /* ── COLS ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+
+    /* ── NOTE BOX ── */
+    .note-box {
+      background: #fff3e8;
+      border-left: 3px solid #e07b2a;
+      padding: 6px 10px;
+      border-radius: 0 6px 6px 0;
+      font-size: 10.5px;
+      margin: 6px 0;
+    }
+
+    @media print {
+      body { padding: 10px; font-size: 11px; }
+      .grid { gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════
+     HEADER
+══════════════════════════════════════════════════ -->
+<header>
+  <h1>Claude Code <span>Workflow Cheatsheet</span></h1>
+  <p>STP Client • Spring Boot 3.3 • SOAP/STPG Hub • Oracle • Docker Swarm • 2026 Edition</p>
+</header>
+
+<!-- ══════════════════════════════════════════════════
+     GRID
+══════════════════════════════════════════════════ -->
+<div class="grid">
+
+  <!-- ─────────────────────────────
+       1. GETTING STARTED
+  ───────────────────────────── -->
+  <div class="card">
+    <div class="card-title">
+      <span class="num orange">1</span> Getting Started
+    </div>
+
+    <p style="font-size:11px;margin-bottom:6px;">Requires Node 18+ and Java 21+</p>
+
+    <pre>curl -fsSL https://claude.ai/install.sh | bash</pre>
+    <pre>cd stp-client
+claude
+/init</pre>
+
+    <div class="note-box">
+      Scans codebase, detects Spring Boot + SOAP stack, creates starter <code>CLAUDE.md</code> with project context.
+    </div>
+
+    <ul class="dotlist" style="margin-top:8px;">
+      <li>Run <code>mvnw clean package</code> to verify build</li>
+      <li>Deploy with <code>build.sh</code> or <code>build.ps1</code></li>
+      <li>Swagger UI at <code>/stp-client/swagger-ui.html</code></li>
+    </ul>
+  </div>
+
+  <!-- ─────────────────────────────
+       2. UNDERSTANDING CLAUDE.md
+  ───────────────────────────── -->
+  <div class="card span2">
+    <div class="card-title">
+      <span class="num orange">2</span> Understanding CLAUDE.md
+    </div>
+
+    <p style="font-size:11px;margin-bottom:8px;">
+      <strong>CLAUDE.md</strong> = Claude's persistent memory about the project. Loaded automatically at the start of every session.
+    </p>
+
+    <div class="label-row">
+      <span class="lbl what">WHAT</span>
+      <span class="lbl why">WHY</span>
+      <span class="lbl how">HOW</span>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <ul class="checklist">
+          <li>Tech stack (Spring Boot 3.3, Java 21)</li>
+          <li>SOAP endpoint + credentials pattern</li>
+          <li>Oracle schema &amp; audit tables</li>
+          <li>Docker Swarm constraints</li>
+          <li>Crypto: CMS logon + XAdES send</li>
+        </ul>
+      </div>
+      <div class="code-block">
+<span class="comment"># Project: STP Client (STPG Hub)</span>
+<span class="hl">Spring Boot 3.3 · Java 21 · SOAP · Oracle</span>
+
+<span class="comment">## SOAP Hub</span>
+<span class="key">endpoint:</span> <span class="val">http://172.16.2.8:7080/GWClientMUService</span>
+<span class="key">auth:</span>     <span class="val">CMS signed password (SHA256withRSA)</span>
+<span class="key">send:</span>     <span class="val">XAdES signed XML (pacs.009)</span>
+
+<span class="comment">## Commands</span>
+<span class="val">./build.sh dev</span>          <span class="comment"># build + push</span>
+<span class="val">mvnw clean package</span>      <span class="comment"># local jar</span>
+<span class="val">docker stack deploy ...</span>  <span class="comment"># swarm</span>
+      </div>
+    </div>
+
+    <hr/>
+
+    <div class="two-col" style="margin-top:4px;">
+      <div>
+        <div class="section-title orange">Session EW1 Fault Handling</div>
+        <ul class="checklist">
+          <li>Detect EW1 → invalidate session</li>
+          <li>compareAndSet(sessionId, null)</li>
+          <li>Auto-retry with fresh logon</li>
+        </ul>
+      </div>
+      <div>
+        <div class="section-title orange">Audit Two-Step Pattern</div>
+        <ul class="checklist">
+          <li>INSERT PENDING before SOAP call</li>
+          <li>@Async UPDATE after response</li>
+          <li>CLOB via OracleConnection API</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────
+       3. MEMORY FILE HIERARCHY
+  ───────────────────────────── -->
+  <div class="card">
+    <div class="card-title">
+      <span class="num orange">3</span> Memory File Hierarchy
+    </div>
+
+    <div class="tree">
+<span class="folder">~/.claude/CLAUDE.md</span>
+<span class="note">  Global — all projects</span>
+
+<span class="folder">~/CLAUDE.md</span>
+<span class="note">  Parent monorepo root</span>
+
+<span class="folder">./CLAUDE.md</span>  ← <span class="note">this project</span>
+<span class="note">  STP stack + conventions</span>
+
+<span class="folder">./AGENTS.md</span>
+<span class="note">  Role: Senior Backend + SecArch</span>
+    </div>
+
+    <hr/>
+
+    <ul class="checklist" style="margin-top:4px;">
+      <li>Keep each file &lt;200 lines</li>
+      <li>Subfolder files append context</li>
+      <li>Never overwrite parent context</li>
+      <li>Reference AGENTS.md for SOAP rules</li>
+    </ul>
+
+    <div class="note-box" style="margin-top:8px;">
+      <strong>AGENTS.md already present</strong> — defines SOAP client patterns, package layout, and logging rules for Claude agents.
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────
+       4. CLAUDE.MD BEST PRACTICES
+  ───────────────────────────── -->
+  <div class="card">
+    <div class="card-title">
+      <span class="num orange">4</span> CLAUDE.md Best Practices
+    </div>
+
+    <ul class="checklist">
+      <li>Run <code>/init</code> first, then refine output</li>
+      <li>Be specific: "extend WebServiceGatewaySupport"</li>
+      <li>Add gotchas Claude cannot infer</li>
+      <li>Reference <code>@AGENTS.md</code> for SOAP rules</li>
+      <li>Add workflow rules (sign → send → audit)</li>
+      <li>Keep memory concise — no boilerplate</li>
+      <li>Commit <code>CLAUDE.md</code> + <code>AGENTS.md</code> to Git</li>
+      <li class="x">Never put credentials in CLAUDE.md</li>
+      <li class="x">Never put keystore paths with passwords</li>
+    </ul>
+
+    <hr/>
+
+    <div class="section-title orange">STP-Specific Gotchas</div>
+    <ul class="dotlist">
+      <li>block4 must be wrapped in CDATA</li>
+      <li>Password signed UTF-16LE before SOAP</li>
+      <li>XAdES appends to <code>AppHdr/Sgntr</code></li>
+      <li>EW1 = session expired, not auth failure</li>
+    </ul>
+  </div>
+
+  <!-- ─────────────────────────────
+       5. PROJECT FILE STRUCTURE
+  ───────────────────────────── -->
+  <div class="card">
+    <div class="card-title">
+      <span class="num orange">5</span> Project File Structure
+    </div>
+
+    <div class="tree">
+<span class="folder">stp-client/</span>
+├── <span class="file">CLAUDE.md</span>          <span class="note">← create this</span>
+├── <span class="file">AGENTS.md</span>          <span class="note">← already exists</span>
+├── <span class="folder">.claude/</span>
+│   ├── <span class="file">settings.json</span>
+│   ├── <span class="file">settings.local.json</span>
+│   └── <span class="folder">skills/</span>
+│       ├── <span class="folder">soap-debug/</span>
+│       │   └── <span class="file">SKILL.md</span>
+│       └── <span class="folder">deploy-swarm/</span>
+│           └── <span class="file">SKILL.md</span>
+├── <span class="folder">src/main/java/.../</span>
+│   ├── <span class="folder">remote/</span>    <span class="note">GWClientMuRemote</span>
+│   ├── <span class="folder">service/</span>   <span class="note">SessionManager, Polling</span>
+│   ├── <span class="folder">audit/</span>     <span class="note">AuditService, Repo</span>
+│   └── <span class="folder">utils/</span>     <span class="note">CryptoManager</span>
+├── <span class="folder">docker/</span>
+│   ├── <span class="file">docker-stack.yml</span>
+│   └── <span class="folder">config_props/</span>
+└── <span class="file">build.sh</span>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────
+       6. ADDING SKILLS
+  ───────────────────────────── -->
+  <div class="card span2">
+    <div class="card-title">
+      <span class="num orange">6</span> Adding Skills (The Superpower)
+    </div>
+
+    <p style="font-size:11px;margin-bottom:8px;">
+      Skills = markdown guides Claude auto-invokes via natural language.
+    </p>
+
+    <div class="two-col">
+      <div>
+        <div class="section-title">Project skill</div>
+        <code>.claude/skills/&lt;name&gt;/SKILL.md</code>
+        <div class="section-title" style="margin-top:8px;">Personal skill</div>
+        <code>~/.claude/skills/&lt;name&gt;/SKILL.md</code>
+
+        <div class="note-box" style="margin-top:8px;">
+          Description field is critical for auto-activation. Be specific about triggers.
+        </div>
+      </div>
+
+      <div>
+        <div class="code-block">
+<span class="comment">--- soap-debug/SKILL.md ---</span>
+<span class="key">name:</span> <span class="val">soap-debug</span>
+<span class="key">description:</span> <span class="str">Debug SOAP faults from
+  STPG Hub, extract FaultDetail XML,
+  map EW1/EW2 codes to root cause</span>
+<span class="key">allowed tools:</span> <span class="val">Read, Grep, Bash</span>
+
+<span class="hl"># SOAP Debug Patterns</span>
+<span class="val">1. Check SoapPayloadLoggingInterceptor</span>
+<span class="val">2. Look for FaultDetail in response</span>
+<span class="val">3. EW1 = session not found → re-logon</span>
+        </div>
+      </div>
+    </div>
+
+    <hr/>
+
+    <div class="two-col">
+      <div>
+        <div class="code-block">
+<span class="comment">--- deploy-swarm/SKILL.md ---</span>
+<span class="key">name:</span> <span class="val">deploy-swarm</span>
+<span class="key">description:</span> <span class="str">Build Docker image and deploy
+  stp-client to Docker Swarm via
+  build.sh; handles secrets + configs</span>
+
+<span class="hl"># Deploy Steps</span>
+<span class="val">./build.sh [dev|prod] [tag]</span>
+<span class="val">docker stack deploy -c docker/docker-stack.yml stp</span>
+        </div>
+      </div>
+      <div>
+        <div class="code-block">
+<span class="comment">--- audit-trace/SKILL.md ---</span>
+<span class="key">name:</span> <span class="val">audit-trace</span>
+<span class="key">description:</span> <span class="str">Trace a transaction through
+  STP_AUDIT_LOG and STP_SEND_TXN_DETAIL
+  by MIR, MSG_ID, or AUDIT_LOG_ID</span>
+
+<span class="hl"># Query Pattern</span>
+<span class="val">SELECT * FROM STP_AUDIT_LOG</span>
+<span class="val">JOIN STP_SEND_TXN_DETAIL ON ID=AUDIT_LOG_ID</span>
+<span class="val">WHERE RESPONSE_MIR = :mir</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────
+       7. SKILL IDEAS – STP PROJECT
+  ───────────────────────────── -->
+  <div class="card">
+    <div class="card-title">
+      <span class="num orange">7</span> Skill Ideas for STP Engineers
+    </div>
+
+    <div class="two-col">
+      <ul class="checklist">
+        <li><strong>soap-debug</strong></li>
+        <li><strong>deploy-swarm</strong></li>
+        <li><strong>audit-trace</strong></li>
+        <li><strong>session-reset</strong></li>
+        <li><strong>keystore-inspect</strong></li>
+      </ul>
+      <ul class="checklist">
+        <li><strong>pacs009-builder</strong></li>
+        <li><strong>xades-sign</strong></li>
+        <li><strong>oracle-schema</strong></li>
+        <li><strong>polling-debug</strong></li>
+        <li><strong>api-doc-update</strong></li>
+      </ul>
+    </div>
+
+    <hr/>
+
+    <div class="section-title orange">Quick Skill Trigger Examples</div>
+    <ul class="dotlist">
+      <li>"debug the EW1 SOAP fault" → <code>soap-debug</code></li>
+      <li>"deploy to swarm" → <code>deploy-swarm</code></li>
+      <li>"trace MIR xxx" → <code>audit-trace</code></li>
+      <li>"sign the XML payload" → <code>xades-sign</code></li>
+    </ul>
+  </div>
+
+  <!-- ─────────────────────────────
+       8. SETTING UP HOOKS
+  ───────────────────────────── -->
+  <div class="card">
+    <div class="card-title">
+      <span class="num orange">8</span> Setting Up Hooks
+    </div>
+
+    <p style="font-size:11px;margin-bottom:6px;">Hooks = deterministic callbacks on Claude actions</p>
+    <div style="margin-bottom:6px;">
+      <span class="tag orange">PreToolUse</span>
+      <span class="tag dark">PostToolUse</span>
+      <span class="tag light">Notification</span>
+    </div>
+
+    <div class="code-block">
+<span class="comment">// .claude/settings.json</span>
+<span class="key">"hooks"</span>: {
+  <span class="key">"PreToolUse"</span>: [{
+    <span class="key">"matcher"</span>: <span class="str">"Bash"</span>,
+    <span class="key">"hooks"</span>: [{
+      <span class="key">"type"</span>: <span class="str">"command"</span>,
+      <span class="key">"command"</span>: <span class="str">"scripts/sec_check.sh"</span>,
+      <span class="key">"timeout"</span>: <span class="val">5</span>
+    }]
+  }],
+  <span class="key">"PostToolUse"</span>: [{
+    <span class="key">"matcher"</span>: <span class="str">"Edit"</span>,
+    <span class="key">"hooks"</span>: [{
+      <span class="key">"type"</span>: <span class="str">"command"</span>,
+      <span class="key">"command"</span>: <span class="str">"mvnw compile -q"</span>
+    }]
+  }]
+}
+    </div>
+
+    <p style="font-size:10px;margin-top:6px;">
+      Exit codes: <span class="tag green">0</span> allow &nbsp;
+      <span class="tag orange">2</span> block &nbsp;
+      <span class="tag red">other</span> warn
+    </p>
+  </div>
+
+  <!-- ─────────────────────────────
+       9. PERMISSIONS & SAFETY
+  ───────────────────────────── -->
+  <div class="card">
+    <div class="card-title">
+      <span class="num orange">9</span> Permissions &amp; Safety
+    </div>
+
+    <div class="code-block">
+<span class="comment">// .claude/settings.local.json (current)</span>
+{
+  <span class="key">"permissions"</span>: {
+    <span class="key">"allow"</span>: [<span class="str">"Bash(keytool:*)"</span>]
+  }
+}
+    </div>
+
+    <div class="section-title orange" style="margin-top:8px;">Recommended additions</div>
+    <div class="code-block">
+{
+  <span class="key">"permissions"</span>: {
+    <span class="key">"allow"</span>: [
+      <span class="str">"Read:*"</span>,
+      <span class="str">"Bash(git:*)"</span>,
+      <span class="str">"Bash(mvnw:*)"</span>,
+      <span class="str">"Bash(./build.sh:*)"</span>,
+      <span class="str">"Bash(keytool:*)"</span>,
+      <span class="str">"Write:src/**"</span>
+    ],
+    <span class="key">"deny"</span>: [
+      <span class="str">"Read:key/**"</span>,
+      <span class="str">"Bash(rm -rf:*)"</span>,
+      <span class="str">"Bash(curl:*)"</span>
+    ]
+  }
+}
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────
+       10. THE 4-LAYER ARCHITECTURE
+  ───────────────────────────── -->
+  <div class="card">
+    <div class="card-title">
+      <span class="num orange">10</span> The 4-Layer Architecture
+    </div>
+
+    <div class="layer">
+      <div class="layer-title">L1 – CLAUDE.md + AGENTS.md</div>
+      <div class="layer-sub">Persistent context: SOAP rules, Oracle schema, Docker constraints, crypto patterns</div>
+    </div>
+    <div class="layer">
+      <div class="layer-title">L2 – Skills</div>
+      <div class="layer-sub">soap-debug, deploy-swarm, audit-trace, xades-sign, pacs009-builder</div>
+    </div>
+    <div class="layer">
+      <div class="layer-title">L3 – Hooks</div>
+      <div class="layer-sub">PreToolUse: block credential leaks; PostToolUse: auto-compile on edit</div>
+    </div>
+    <div class="layer">
+      <div class="layer-title">L4 – Agents</div>
+      <div class="layer-sub">Subagents: Explore codebase, Plan refactors, Review SOAP payloads independently</div>
+    </div>
+
+    <hr/>
+
+    <div class="note-box">
+      SessionManager (L2 service) is the most critical class — always read it before editing session or retry logic.
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────
+       11. DAILY WORKFLOW PATTERN
+  ───────────────────────────── -->
+  <div class="card">
+    <div class="card-title">
+      <span class="num orange">11</span> Daily Workflow Pattern
+    </div>
+
+    <div class="flow-step orange-bg">cd stp-client &amp;&amp; claude</div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-step">Shift + Tab + Tab → Plan Mode</div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-step light-bg">Describe: "fix EW1 retry in getUpdates" or<br/>"add inbound transfer persistence"</div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-step">Shift + Tab → Auto Accept edits</div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-step light-bg">mvnw clean package → verify build</div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-step">/compact → compress context</div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-step orange-bg">./build.sh dev → docker stack deploy</div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-step">Commit frequently · new session per feature</div>
+  </div>
+
+  <!-- ─────────────────────────────
+       12. QUICK REFERENCE
+  ───────────────────────────── -->
+  <div class="card span2">
+    <div class="card-title">
+      <span class="num orange">12</span> Quick Reference
+    </div>
+
+    <div class="two-col">
+      <!-- Left: Commands -->
+      <div>
+        <div class="section-title orange">Claude Commands</div>
+        <table>
+          <tr><td><code>/init</code></td><td>Generate CLAUDE.md for project</td></tr>
+          <tr><td><code>/doccat</code></td><td>Check installation</td></tr>
+          <tr><td><code>/compact</code></td><td>Compress context window</td></tr>
+          <tr><td><code>Shift+Tab</code></td><td>Change modes (Plan/Auto)</td></tr>
+          <tr><td><code>Tab</code></td><td>Toggle extended thinking</td></tr>
+          <tr><td><code>Esc Esc</code></td><td>Rewind / undo last action</td></tr>
+        </table>
+
+        <div class="section-title orange" style="margin-top:10px;">Key REST Endpoints</div>
+        <table>
+          <tr><td><code>POST /gw/logon</code></td><td>Authenticate with STPG hub</td></tr>
+          <tr><td><code>POST /gw/send</code></td><td>Submit pacs.009 transfer</td></tr>
+          <tr><td><code>POST /gw/get-updates</code></td><td>Poll inbound messages</td></tr>
+          <tr><td><code>POST /gw/send-ack-nak</code></td><td>ACK or NAK received msg</td></tr>
+          <tr><td><code>POST /gw/logout</code></td><td>Terminate session</td></tr>
+        </table>
+      </div>
+
+      <!-- Right: STP Core Flows -->
+      <div>
+        <div class="section-title orange">Core Function Flow</div>
+        <table>
+          <tr><th>Function</th><th>Key Steps</th></tr>
+          <tr><td><code>logon()</code></td><td>CMS sign pw → SOAP → cache sessionId</td></tr>
+          <tr><td><code>send()</code></td><td>Build pacs.009 → XAdES sign → SOAP → verify CMS resp</td></tr>
+          <tr><td><code>getUpdate()</code></td><td>SOAP GetUpdates → parse list → audit</td></tr>
+          <tr><td><code>setACKNAK()</code></td><td>SOAP SendAckNak with type + MIR</td></tr>
+          <tr><td><code>logout()</code></td><td>SOAP → clear AtomicReference</td></tr>
+        </table>
+
+        <div class="section-title orange" style="margin-top:10px;">EW Fault Codes</div>
+        <table>
+          <tr><th>Code</th><th>Meaning</th><th>Action</th></tr>
+          <tr><td><span class="tag orange">EW1</span></td><td>Session not found</td><td>Invalidate + re-logon</td></tr>
+          <tr><td><span class="tag dark">EW2</span></td><td>Auth failure</td><td>Check credentials</td></tr>
+          <tr><td><span class="tag dark">EW3</span></td><td>Invalid message</td><td>Validate pacs.009 XML</td></tr>
+        </table>
+
+        <div class="section-title orange" style="margin-top:10px;">Docker Quick Deploy</div>
+        <pre style="font-size:10px;">./build.sh dev                         # build + push
+docker stack deploy \
+  -c docker/docker-stack.yml stp        # deploy
+docker service logs stp_stp-client -f  # tail logs</pre>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /grid -->
+
+</body>
+</html>
