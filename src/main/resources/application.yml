@@ -22,3 +22,15 @@ stp:
   polling:
     enabled: false
     delay-ms: 55000
+
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operationsSorter: method
+    tagsSorter: alpha
+    tryItOutEnabled: true
+  paths-to-match: /gw/**
