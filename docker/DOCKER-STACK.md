@@ -4,8 +4,8 @@
 
 Deploys `stp-client` as a **Docker Swarm** service with:
 - TLS keystore injected via Docker secret
-- Spring Boot config bind-mounted from host
-- Log output bind-mounted for persistence
+- Spring Boot config managed via Docker config (Swarm-distributed)
+- Log output persisted via named volume
 
 ---
 
@@ -13,39 +13,51 @@ Deploys `stp-client` as a **Docker Swarm** service with:
 
 ```
 docker/
-├── docker-stack.yml              # Swarm stack — Linux/Mac paths
+├── docker-stack.yml              # Swarm stack — Linux server
+├── docker-stack-mac.yml          # Swarm stack — Mac paths
 ├── docker-stack-windows.yml      # Swarm stack — Windows paths
 ├── config_props/
-│   ├── application.yml           # Base Spring Boot config
-│   └── application-dev.yml       # Dev profile (keystore, DB, SOAP endpoints)
+│   ├── application.yml           # Base Spring Boot config  ← source for Docker config
+│   └── application-dev.yml       # Dev profile (keystore, DB, SOAP endpoints)  ← source for Docker config
 ├── key/
 │   └── LBBCLALABXXX.pfx          # TLS keystore (PKCS12) — source for Docker secret
-└── logs/                         # App log output (bind-mounted at runtime)
+└── logs/                         # Not used (logs now stored in named volume)
 ```
 
 ---
 
 ## Prerequisites
 
-Before the first deploy, create the Docker secret and the `logs` directory.
+Before the first deploy, create the Docker secret and Docker configs.
 
 **Linux / Mac**
 ```bash
+# Secret — TLS keystore
 docker secret create LBBCLALABXXX.pfx ./key/LBBCLALABXXX.pfx
-mkdir -p logs
+
+# Configs — Spring Boot application config
+docker config create stp-app-config      ./config_props/application.yml
+docker config create stp-app-config-dev  ./config_props/application-dev.yml
 ```
 
 **Windows**
 ```powershell
 docker secret create LBBCLALABXXX.pfx .\key\LBBCLALABXXX.pfx
-mkdir logs
+
+docker config create stp-app-config      .\config_props\application.yml
+docker config create stp-app-config-dev  .\config_props\application-dev.yml
 ```
 
 ---
 
 ## Deploy
 
-**Linux / Mac**
+**Linux (server)**
+```bash
+docker stack deploy -c docker-stack.yml stp
+```
+
+**Mac**
 ```bash
 docker stack deploy -c docker-stack-mac.yml stp
 ```
@@ -57,13 +69,36 @@ docker stack deploy -c docker-stack-windows.yml stp
 
 ---
 
+## How Docker Configs Work
+
+Docker configs are stored in the **Swarm manager's Raft store** — not on any host filesystem.
+Swarm automatically distributes them to all nodes running replicas.
+
+```
+config_props/application.yml    (host file — source only)
+        │
+        ▼  docker config create
+Docker config: stp-app-config   (stored in Swarm Raft — encrypted)
+        │
+        ▼  distributed to all nodes automatically
+/usr/apps/config_props/application.yml  (mounted read-only inside container)
+        │
+        ▼  loaded by Spring Boot via
+--spring.config.location=./config_props/application.yml
+```
+
+> The host file (`config_props/application.yml`) is only used to **create or recreate** the Docker config.
+> Once created, Swarm manages distribution — no manual file sync across nodes needed.
+
+---
+
 ## How Secrets Work
 
 ```
-key/LBBCLALABXXX.pfx          (host file)
+key/LBBCLALABXXX.pfx            (host file — source only)
         │
         ▼  docker secret create
-Docker secret: LBBCLALABXXX.pfx
+Docker secret: LBBCLALABXXX.pfx (stored encrypted in Swarm Raft)
         │
         ▼  mounted inside container at
 /usr/apps/key/LBBCLALABXXX.pfx
@@ -76,9 +111,41 @@ application-dev.yml  →  ks.path: key/LBBCLALABXXX.pfx
 
 ---
 
-## Update Keystore (New .pfx File)
+## Update application.yml or application-dev.yml
 
-When a new `LBBCLALABXXX.pfx` is received, follow these steps:
+> **Must be run on the Swarm manager node.**
+> Docker configs are immutable — remove and recreate to update.
+
+**1. Edit the file on the manager host**
+```bash
+vi ./config_props/application.yml
+```
+
+**2. Remove old config**
+```bash
+docker config rm stp-app-config
+```
+
+**3. Recreate from updated file**
+```bash
+docker config create stp-app-config ./config_props/application.yml
+```
+
+**4. Redeploy stack** — Swarm rolling-restarts the service with the new config
+```bash
+docker stack deploy -c docker-stack.yml stp
+```
+
+Same steps apply for `application-dev.yml`:
+```bash
+docker config rm stp-app-config-dev
+docker config create stp-app-config-dev ./config_props/application-dev.yml
+docker stack deploy -c docker-stack.yml stp
+```
+
+---
+
+## Update Keystore (New .pfx File)
 
 **1. Replace the file**
 
@@ -115,15 +182,8 @@ docker secret create LBBCLALABXXX.pfx .\key\LBBCLALABXXX.pfx
 ```
 
 **5. Redeploy**
-
-_Linux / Mac_
 ```bash
-docker stack deploy -c docker-stack-mac.yml stp
-```
-
-_Windows_
-```powershell
-docker stack deploy -c docker-stack-windows.yml stp
+docker stack deploy -c docker-stack.yml stp
 ```
 
 ---
@@ -141,6 +201,7 @@ docker stack deploy -c docker-stack-windows.yml stp
 | Memory limit  | `512 MB`                          |
 | CPU limit     | `1.0`                             |
 | Timezone      | `Asia/Bangkok`                    |
+| Spring profile| `local`                           |
 
 ---
 
@@ -198,13 +259,15 @@ t=150s   Check #5  fail #3 counted → UNHEALTHY → Swarm restarts container
 
 ## Quick Reference
 
-| Action              | Command                                         |
-|---------------------|-------------------------------------------------|
-| Deploy stack        | `docker stack deploy -c docker-stack.yml stp`  |
-| Service status      | `docker service ls`                             |
-| Task history        | `docker service ps stp_stp-client`              |
-| Stream logs         | `docker service logs -f stp_stp-client`         |
-| List secrets        | `docker secret ls`                              |
-| Scale down          | `docker service scale stp_stp-client=0`         |
-| Scale up            | `docker service scale stp_stp-client=1`         |
-| Remove stack        | `docker stack rm stp`                           |
+| Action                     | Command                                                          |
+|----------------------------|------------------------------------------------------------------|
+| Deploy stack               | `docker stack deploy -c docker-stack.yml stp`                   |
+| Service status             | `docker service ls`                                              |
+| Task history               | `docker service ps stp_stp-client`                               |
+| Stream logs                | `docker service logs -f stp_stp-client`                          |
+| List secrets               | `docker secret ls`                                               |
+| List configs               | `docker config ls`                                               |
+| Inspect config             | `docker config inspect stp-app-config`                           |
+| Scale down                 | `docker service scale stp_stp-client=0`                          |
+| Scale up                   | `docker service scale stp_stp-client=1`                          |
+| Remove stack               | `docker stack rm stp`                                            |
