@@ -23,6 +23,7 @@ services:
         target: /usr/apps/logs
     environment:
       - TZ=Asia/Bangkok
+      - SPRING_PROFILES_ACTIVE=local
     command:
       - java
       - -jar
