@@ -24,6 +24,11 @@ services:
     environment:
       - TZ=Asia/Bangkok
       - SPRING_PROFILES_ACTIVE=local
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
     command:
       - java
       - -jar
