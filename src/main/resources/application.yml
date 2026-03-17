@@ -2,7 +2,7 @@ spring:
   application:
     name: stp-client
   profiles:
-    active: lbbdev
+    active: dev
   mvc:
     throw-exception-if-no-handler-found: true
   web:

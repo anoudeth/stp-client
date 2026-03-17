@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   stp-client:
-    image: 172.16.4.62:5000/noh/stp-client:dev-b4fd3d1
+    image: 172.16.4.62:5000/noh/stp-client:dev-6ca5051
     networks:
       lbb_network:
         aliases:
@@ -15,7 +15,7 @@ services:
       - source: stp-keystore
         target: /usr/apps/key/LBBCLALABXXX.pfx
     configs:
-      - source: stp-app-config
+      - source: stp-app-config-2
         target: /usr/apps/config_props/application.yml
       - source: stp-app-config-dev
         target: /usr/apps/config_props/application-dev.yml
@@ -77,7 +77,7 @@ volumes:
     driver: local
 
 configs:
-  stp-app-config:
+  stp-app-config-2:
     external: true
   stp-app-config-dev:
     external: true
