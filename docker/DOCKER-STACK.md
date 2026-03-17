@@ -114,33 +114,79 @@ application-dev.yml  →  ks.path: key/LBBCLALABXXX.pfx
 ## Update application.yml or application-dev.yml
 
 > **Must be run on the Swarm manager node.**
-> Docker configs are immutable — remove and recreate to update.
+> Docker configs are immutable — use versioned names to update safely.
+> This approach never detaches the config from the running service — zero downtime.
+
+### Update application.yml
 
 **1. Edit the file on the manager host**
 ```bash
 vi ./config_props/application.yml
 ```
 
-**2. Remove old config**
+**2. Create new config with a bumped version name**
 ```bash
-docker config rm stp-app-config
+docker config create stp-app-config-v2 ./config_props/application.yml
 ```
 
-**3. Recreate from updated file**
-```bash
-docker config create stp-app-config ./config_props/application.yml
+**3. Update stack file to reference new version**
+```yaml
+configs:
+  - source: stp-app-config-v2
+    target: /usr/apps/config_props/application.yml
+...
+configs:
+  stp-app-config-v2:
+    external: true
 ```
 
-**4. Redeploy stack** — Swarm rolling-restarts the service with the new config
+**4. Redeploy** — Swarm swaps atomically and rolling-restarts the service
 ```bash
 docker stack deploy -c docker-stack.yml stp
 ```
 
-Same steps apply for `application-dev.yml`:
+**5. Remove old config after successful deploy**
 ```bash
-docker config rm stp-app-config-dev
-docker config create stp-app-config-dev ./config_props/application-dev.yml
+docker config rm stp-app-config-v1
+```
+
+---
+
+### Update application-dev.yml
+
+Same steps — bump version on `stp-app-config-dev`:
+
+```bash
+vi ./config_props/application-dev.yml
+
+docker config create stp-app-config-dev-v2 ./config_props/application-dev.yml
+```
+
+Update stack file:
+```yaml
+configs:
+  - source: stp-app-config-dev-v2
+    target: /usr/apps/config_props/application-dev.yml
+...
+configs:
+  stp-app-config-dev-v2:
+    external: true
+```
+
+```bash
 docker stack deploy -c docker-stack.yml stp
+docker config rm stp-app-config-dev-v1
+```
+
+---
+
+### Verify config content
+```bash
+# List all configs
+docker config ls
+
+# Inspect content of a config
+docker config inspect --pretty stp-app-config-v2
 ```
 
 ---
