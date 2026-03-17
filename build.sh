@@ -31,7 +31,7 @@ error()   { echo -e "${RED}ERROR: $*${NC}" >&2; exit 1; }
 
 ENV="$1"
 # Private Docker registry (internal network)
-REGISTRY="172.16.4.62:5000/stp-client"
+REGISTRY="172.16.4.62:5000/noh/stp-client"
 
 # ─────────────────────────────────────────────
 #  Platform
