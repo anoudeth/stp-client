@@ -40,7 +40,7 @@
     </appender>
 
     <!-- local and dev: trace-level app logging, sync console for readable output -->
-    <springProfile name="local,dev">
+    <springProfile name="local,dev,lbbdev">
         <root level="info">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="AsyncRollingFile"/>
