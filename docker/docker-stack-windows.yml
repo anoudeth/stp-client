@@ -14,16 +14,18 @@ services:
     secrets:
       - source: stp-keystore
         target: /usr/apps/key/LBBCLALABXXX.pfx
+    configs:
+      - source: stp-app-config
+        target: /usr/apps/config_props/application.yml
+      - source: stp-app-config-dev
+        target: /usr/apps/config_props/application-dev.yml
     volumes:
-      - type: bind
-        source: D:\lmpsLB\smart\stp-client\docker\config_props
-        target: /usr/apps/config_props
-      - type: bind
-        source: D:\lmpsLB\smart\stp-client\docker\logs
+      - type: volume
+        source: stp-logs
         target: /usr/apps/logs
     environment:
       - TZ=Asia/Bangkok
-      - SPRING_PROFILES_ACTIVE=local
+      - SPRING_PROFILES_ACTIVE=dev
     logging:
       driver: json-file
       options:
@@ -68,6 +70,16 @@ services:
 
 networks:
   lbb_network:
+    external: true
+
+volumes:
+  stp-logs:
+    driver: local
+
+configs:
+  stp-app-config:
+    external: true
+  stp-app-config-dev:
     external: true
 
 secrets:
