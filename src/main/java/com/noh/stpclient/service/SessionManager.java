@@ -4,6 +4,7 @@ import com.noh.stpclient.exception.GatewayIntegrationException;
 import com.noh.stpclient.model.xml.LogonResponse;
 import com.noh.stpclient.remote.GWClientMuRemote;
 import com.noh.stpclient.utils.CryptoManager;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +36,7 @@ public class SessionManager {
 
     private final GWClientMuRemote soapClient;
     private final CryptoManager cryptoManager;
+    private final SessionRepository sessionRepository;
     private final String username;
     private final String password;
 
@@ -43,12 +45,28 @@ public class SessionManager {
 
     public SessionManager(GWClientMuRemote soapClient,
                           CryptoManager cryptoManager,
+                          SessionRepository sessionRepository,
                           @Value("${stp.soap.username}") String username,
                           @Value("${stp.soap.password}") String password) {
         this.soapClient = soapClient;
         this.cryptoManager = cryptoManager;
+        this.sessionRepository = sessionRepository;
         this.username = username;
         this.password = password;
+    }
+
+    /**
+     * On startup, restores any session ID persisted from the previous run.
+     * If the restored session is stale, the first SOAP call will get EW1 and
+     * the normal retry logic will re-establish a fresh session.
+     */
+    @PostConstruct
+    public void restore() {
+        String stored = sessionRepository.findSessionId(username);
+        if (stored != null) {
+            activeSession.set(stored);
+            log.info("Session restored from DB: {}", stored);
+        }
     }
 
     /**
@@ -69,6 +87,7 @@ public class SessionManager {
 
             session = doLogon();
             activeSession.set(session);
+            sessionRepository.save(username, session);
             return session;
         } finally {
             loginLock.unlock();
@@ -82,6 +101,7 @@ public class SessionManager {
      */
     public void invalidate(String sessionId) {
         if (activeSession.compareAndSet(sessionId, null)) {
+            sessionRepository.delete(username);
             log.warn("Session invalidated: {}", sessionId);
         }
     }
@@ -97,6 +117,7 @@ public class SessionManager {
         if (session == null) return;
 
         soapClient.logout(session);
+        sessionRepository.delete(username);
         log.info("Session {} logged out", session);
     }
 
@@ -110,6 +131,7 @@ public class SessionManager {
         if (session != null) {
             try {
                 soapClient.logout(session);
+                sessionRepository.delete(username);
                 log.info("Session {} closed on shutdown", session);
             } catch (Exception e) {
                 log.warn("Logout on shutdown failed for session {}: {}", session, e.getMessage());

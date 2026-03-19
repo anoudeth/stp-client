@@ -1,4 +1,15 @@
 -- ============================================================
+-- STP Session Table
+-- ============================================================
+
+CREATE TABLE STP_SESSION (
+    USERNAME    VARCHAR2(100) NOT NULL,
+    SESSION_ID  VARCHAR2(100) NOT NULL,
+    CREATED_AT  TIMESTAMP     NOT NULL,
+    CONSTRAINT  STP_SESSION_PK PRIMARY KEY (USERNAME)
+);
+
+-- ============================================================
 -- STP Audit Tables
 -- ============================================================
 
