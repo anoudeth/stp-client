@@ -40,7 +40,23 @@
     </appender>
 
     <!-- local and dev: trace-level app logging, sync console for readable output -->
-    <springProfile name="local,dev,devlbb">
+    <springProfile name="dev,devlbb">
+        <root level="info">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="AsyncRollingFile"/>
+        </root>
+        <logger name="org.hibernate" level="error" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="AsyncRollingFile"/>
+        </logger>
+        <logger name="com.noh.stpclient" level="trace" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="AsyncRollingFile"/>
+        </logger>
+    </springProfile>
+
+    <!-- devlbb: trace-level app logging, sync console for readable output -->
+    <springProfile name="devlbb">
         <root level="info">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="AsyncRollingFile"/>
