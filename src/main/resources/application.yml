@@ -20,7 +20,7 @@ logging:
 
 stp:
   polling:
-    enabled: false
+    enabled: true
     delay-ms: 55000
 
 springdoc:

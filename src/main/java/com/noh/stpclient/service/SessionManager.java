@@ -103,6 +103,12 @@ public class SessionManager {
         if (activeSession.compareAndSet(sessionId, null)) {
             sessionRepository.delete(username);
             log.warn("Session invalidated: {}", sessionId);
+            try {
+                soapClient.logout(sessionId);
+                log.info("Gateway logout sent for invalidated session: {}", sessionId);
+            } catch (Exception e) {
+                log.warn("Gateway logout failed during invalidation (ignored): {}", e.getMessage());
+            }
         }
     }
 
