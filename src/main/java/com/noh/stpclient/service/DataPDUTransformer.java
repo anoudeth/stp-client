@@ -9,9 +9,12 @@ import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Marshaller;
 import java.io.StringWriter;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Service for transforming financial transaction data to DataPDU XML format.
@@ -73,7 +76,7 @@ public class DataPDUTransformer {
         appHdr.setTo(to);
         
         appHdr.setBizMsgIdr(transaction.businessMessageId());
-        appHdr.setMsgDefIdr("pacs.009.001.08");
+        appHdr.setMsgDefIdr("pacs.008.001.08");
         appHdr.setBizSvc("RTGS");
         appHdr.setCreDt(currentDateTime);
         
@@ -273,13 +276,57 @@ public class DataPDUTransformer {
         Marshaller marshaller = jaxbContext.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
         marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
-        
+
         StringWriter writer = new StringWriter();
         marshaller.marshal(dataPDU, writer);
-        
-        String xml = writer.toString();
+
+        String xml = normalizeNamespacePrefixes(writer.toString());
         log.debug("Generated XML: {}", xml);
-        
+
         return xml;
+    }
+
+    /**
+     * JAXB collects all namespace declarations at the root element with generated prefixes
+     * (e.g. xmlns:ns4="urn:cma:stp:xsd:stp.1.0"). This method converts them to inline
+     * default namespace declarations matching the reference format:
+     *   <DataPDU xmlns="urn:cma:stp:xsd:stp.1.0">
+     *   <AppHdr xmlns="urn:iso:std:iso:20022:tech:xsd:head.001.001.01">
+     *   <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+     */
+    private String normalizeNamespacePrefixes(String xml) {
+        // Collect all xmlns:nsX="uri" declarations
+        Matcher m = Pattern.compile("\\s+xmlns:(\\S+?)=\"([^\"]+)\"").matcher(xml);
+        Map<String, String> uriToPrefix = new HashMap<>();
+        while (m.find()) {
+            uriToPrefix.put(m.group(2), m.group(1));
+        }
+
+        String stpNs  = "urn:cma:stp:xsd:stp.1.0";
+        String headNs = "urn:iso:std:iso:20022:tech:xsd:head.001.001.01";
+        String pacsNs = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+
+        String stpPfx  = uriToPrefix.get(stpNs);
+        String headPfx = uriToPrefix.get(headNs);
+        String pacsPfx = uriToPrefix.get(pacsNs);
+
+        // Strip all xmlns:nsX declarations from root element
+        String result = xml.replaceAll("\\s+xmlns:\\S+?=\"[^\"]+\"", "");
+
+        // Replace prefixed tags with default-namespace declarations
+        if (stpPfx != null) {
+            result = result.replace("<"  + stpPfx + ":DataPDU",  "<DataPDU xmlns=\"" + stpNs + "\"");
+            result = result.replace("</" + stpPfx + ":DataPDU>", "</DataPDU>");
+        }
+        if (headPfx != null) {
+            result = result.replace("<"  + headPfx + ":AppHdr",  "<AppHdr xmlns=\"" + headNs + "\"");
+            result = result.replace("</" + headPfx + ":AppHdr>", "</AppHdr>");
+        }
+        if (pacsPfx != null) {
+            result = result.replace("<"  + pacsPfx + ":Document",  "<Document xmlns=\"" + pacsNs + "\"");
+            result = result.replace("</" + pacsPfx + ":Document>", "</Document>");
+        }
+
+        return result;
     }
 }

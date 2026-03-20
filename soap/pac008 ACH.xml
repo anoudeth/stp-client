@@ -1,0 +1,116 @@
+<DataPDU xmlns="urn:cma:stp:xsd:stp.1.0" >
+  <Body>
+<AppHdr xmlns="urn:iso:std:iso:20022:tech:xsd:head.001.001.01" >
+	<Fr>
+		<FIId>
+			<FinInstnId>
+				<BICFI>LBBCLALA</BICFI>
+			</FinInstnId>
+		</FIId>
+	</Fr>
+	<To>
+		<FIId>
+			<FinInstnId>
+				<BICFI>LPDRLALA</BICFI>
+			</FinInstnId>
+		</FIId>
+	</To>
+	<BizMsgIdr>BIZ-16677622204901891</BizMsgIdr>
+	<MsgDefIdr>pacs.008.001.08</MsgDefIdr>
+	<BizSvc>ACH</BizSvc>
+	<CreDt>2026-03-20T02:26:11.875Z</CreDt>
+<Sgntr><ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:SignedInfo><ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"></ds:CanonicalizationMethod><ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"></ds:SignatureMethod><ds:Reference URI="#ref-eedc52d7-4eb7-4234-ba43-bddce6832fd8"><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"></ds:Transform></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></ds:DigestMethod><ds:DigestValue>JrvYMUr/CDPnWlP4UOFtLZq88SYJNABZJOj8973Fib0=</ds:DigestValue></ds:Reference><ds:Reference Type="http://uri.etsi.org/01903/v1.3.2#SignedProperties" URI="#ref-30bb733c-a70d-40e0-8aed-c41bd2f902fa"><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"></ds:Transform></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></ds:DigestMethod><ds:DigestValue>AHZWFn8cma3MWNXyetx905gWy7Xl4/TD7w/c5riMWN0=</ds:DigestValue></ds:Reference><ds:Reference><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"></ds:Transform></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></ds:DigestMethod><ds:DigestValue>UPe9EVWxl7ICISzg48kvsssFCfXoE2Mx0BEXlxkDBc8=</ds:DigestValue></ds:Reference></ds:SignedInfo><ds:SignatureValue>vSRBFbgN+nCTb6ACE1tVoqPBAV88yqJsgqU2MAm0Uj9bWhuK5vc8ISKdJqzLXe+z6PHUUKrmU1nl
+GeN2oFwJg56Vz7++MmjFz3ggjslhpLBeBpAjhuLWCuW2nIT0SSf4lw8dpQ9HaKN0SrKeQnH8qJxJ
+B0Y01usJNO6+TxwMKg+mgn0Ic+TMii3Bb/8Z8Bie8lGFOwxvEXpYHkB4HO/RQJm5LipCaUS6QcIj
+g6yz+0SWBwbMJsaOErddH/gCvn+lIaL5lpFHKm4/aIOxlU4AdQ0skwojxDSWBofnaLsinq4XLNnj
+OEcunlpGHz13di+f/cnlnm0cOncuUWClY/U+eg==</ds:SignatureValue><ds:KeyInfo Id="ref-eedc52d7-4eb7-4234-ba43-bddce6832fd8"><ds:X509Data><ds:X509IssuerSerial><ds:X509IssuerName>CN=NPS-CA, DC=NPSPRO, DC=bolnet, DC=gov, DC=la</ds:X509IssuerName><ds:X509SerialNumber>2386179742259534269128274028486355918855865478</ds:X509SerialNumber></ds:X509IssuerSerial></ds:X509Data></ds:KeyInfo><ds:Object><xades:QualifyingProperties xmlns:xades="http://uri.etsi.org/01903/v1.3.2#"><xades:SignedProperties Id="ref-30bb733c-a70d-40e0-8aed-c41bd2f902fa"><xades:SignedSignatureProperties><xades:SigningTime>2026-03-20T02:27:41Z</xades:SigningTime></xades:SignedSignatureProperties></xades:SignedProperties></xades:QualifyingProperties></ds:Object></ds:Signature></Sgntr></AppHdr>
+
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08" >
+    <FIToFICstmrCdtTrf>
+        <GrpHdr>
+            <MsgId>LBBCOP010320B002</MsgId>
+            <CreDtTm>2026-03-20T09:23:36</CreDtTm>
+            <NbOfTxs>1</NbOfTxs>
+            <TtlIntrBkSttlmAmt Ccy="LAK">100.00</TtlIntrBkSttlmAmt>
+            <IntrBkSttlmDt>2026-03-20</IntrBkSttlmDt>
+            <SttlmInf>
+                <SttlmMtd>CLRG</SttlmMtd>
+            </SttlmInf>
+        </GrpHdr>
+        <CdtTrfTxInf>
+            <PmtId>
+                <InstrId>P00000000038632</InstrId>
+                <EndToEndId>NOTPROVIDED</EndToEndId>
+                <TxId>P00000000038632</TxId>
+            </PmtId>
+            <PmtTpInf>
+                <ClrChanl>RTNS</ClrChanl>
+                <SvcLvl>
+                    <Prtry>0100</Prtry>
+                </SvcLvl>
+                <LclInstrm>
+                    <Prtry>CSDC</Prtry>
+                </LclInstrm>
+                <CtgyPurp>
+                    <Prtry>011</Prtry>
+                </CtgyPurp>
+            </PmtTpInf>
+            <IntrBkSttlmAmt Ccy="LAK">100.00</IntrBkSttlmAmt>
+            <ChrgBr>SLEV</ChrgBr>
+            <InstgAgt>
+                <FinInstnId>
+                    <BICFI>LBBCLALA</BICFI>
+                </FinInstnId>
+            </InstgAgt>
+            <InstdAgt>
+                <FinInstnId>
+                    <BICFI>AGPBLALA</BICFI>
+                </FinInstnId>
+            </InstdAgt>
+            <Dbtr>
+                <Nm>chantha</Nm>
+                <PstlAdr>
+                    <AdrLine>donenoun</AdrLine>
+                </PstlAdr>
+            </Dbtr>
+            <DbtrAcct>
+                <Id>
+                    <Othr>
+                        <Id>000120050003000</Id>
+                    </Othr>
+                </Id>
+            </DbtrAcct>
+            <DbtrAgt>
+                <FinInstnId>
+                    <BICFI>LBBCLALA</BICFI>
+                </FinInstnId>
+            </DbtrAgt>
+            <CdtrAgt>
+                <FinInstnId>
+                    <BICFI>AGPBLALA</BICFI>
+                </FinInstnId>
+            </CdtrAgt>
+            <Cdtr>
+                <Nm>nathom</Nm>
+                <PstlAdr>
+                    <AdrLine>thagnone</AdrLine>
+                </PstlAdr>
+            </Cdtr>
+            <CdtrAcct>
+                <Id>
+                    <Othr>
+                        <Id>0302001410005837</Id>
+                    </Othr>
+                </Id>
+            </CdtrAcct>
+            <InstrForNxtAgt>
+                <InstrInf>ACH test</InstrInf>
+            </InstrForNxtAgt>
+            <RmtInf>
+                <Ustrd>test pacs008 ACH</Ustrd>
+            </RmtInf>
+        </CdtTrfTxInf>
+    </FIToFICstmrCdtTrf>
+</Document>
+</Body>
+</DataPDU>

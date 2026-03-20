@@ -1,0 +1,122 @@
+<DataPDU xmlns="urn:cma:stp:xsd:stp.1.0" >
+  <Body>
+<AppHdr xmlns="urn:iso:std:iso:20022:tech:xsd:head.001.001.01" >
+	<Fr>
+		<FIId>
+			<FinInstnId>
+				<BICFI>LBBCLALA</BICFI>
+			</FinInstnId>
+		</FIId>
+	</Fr>
+	<To>
+		<FIId>
+			<FinInstnId>
+				<BICFI>LPDRLALA</BICFI>
+			</FinInstnId>
+		</FIId>
+	</To>
+	<BizMsgIdr>BIZ-15293465472450984</BizMsgIdr>
+	<MsgDefIdr>pacs.008.001.08</MsgDefIdr>
+	<BizSvc>RTGS</BizSvc>
+	<CreDt>2026-03-04T01:55:54.143Z</CreDt>
+</AppHdr>
+
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08" >
+    <FIToFICstmrCdtTrf>
+        <GrpHdr>
+            <MsgId>LBBCOP010304B0011</MsgId>
+            <CreDtTm>2026-03-04T010:46:27</CreDtTm>
+            <NbOfTxs>1</NbOfTxs>
+            <SttlmInf>
+                <SttlmMtd>CLRG</SttlmMtd>
+            </SttlmInf>
+        </GrpHdr>
+        <CdtTrfTxInf>
+            <PmtId>
+                <InstrId>LBBCOP010304B0011</InstrId>
+                <EndToEndId>NOTPROVIDED</EndToEndId>
+                <TxId>LBBCOP010304B0011</TxId>
+            </PmtId>
+            <PmtTpInf>
+                <ClrChanl>RTGS</ClrChanl>
+                <SvcLvl>
+                    <Prtry>0010</Prtry>
+                </SvcLvl>
+                <LclInstrm>
+                    <Prtry>RTGS-SSCT</Prtry>
+                </LclInstrm>
+                <CtgyPurp>
+                    <Prtry>001</Prtry>
+                </CtgyPurp>
+            </PmtTpInf>
+            <IntrBkSttlmAmt Ccy="LAK">20000.00</IntrBkSttlmAmt>
+            <IntrBkSttlmDt>2026-03-04</IntrBkSttlmDt>
+            <ChrgBr>SHAR</ChrgBr>
+            <InstgAgt>
+                <FinInstnId>
+                    <BICFI>LBBCLALA</BICFI>
+                </FinInstnId>
+            </InstgAgt>
+            <InstdAgt>
+                <FinInstnId>
+                    <BICFI>ACLBLALA</BICFI>
+                </FinInstnId>
+            </InstdAgt>
+            <Dbtr>
+                <Nm>MS INDAVANH NUANTHASING</Nm>
+                <PstlAdr>
+                    <AdrLine>thantluang</AdrLine>
+                </PstlAdr>
+            </Dbtr>
+            <DbtrAcct>
+                <Id>
+                    <Othr>
+                        <Id>22222222222</Id>
+                    </Othr>
+                </Id>
+            </DbtrAcct>
+            <DbtrAgt>
+                <FinInstnId>
+                    <BICFI>LBBCLALA</BICFI>
+                </FinInstnId>
+            </DbtrAgt>
+            <DbtrAgtAcct>
+                <Id>
+                    <Othr>
+                        <Id>0000000208530509</Id>
+                    </Othr>
+                </Id>
+            </DbtrAgtAcct>
+            <CdtrAgt>
+                <FinInstnId>
+                    <BICFI>ACLBLALA</BICFI>
+                </FinInstnId>
+            </CdtrAgt>
+            <CdtrAgtAcct>
+                <Id>
+                    <Othr>
+                        <Id>0000000001410508</Id>
+                    </Othr>
+                </Id>
+            </CdtrAgtAcct>
+            <Cdtr>
+                <Nm>ms manivanh</Nm>
+                <PstlAdr>
+                    <AdrLine>thalart</AdrLine>
+                </PstlAdr>
+            </Cdtr>
+            <CdtrAcct>
+                <Id>
+                    <Othr>
+                        <Id>64687783563446</Id>
+                    </Othr>
+                </Id>
+            </CdtrAcct>
+            <RmtInf>
+                <Ustrd>test</Ustrd>
+            </RmtInf>
+        </CdtTrfTxInf>
+    </FIToFICstmrCdtTrf>
+</Document>
+</Body>
+</DataPDU>
