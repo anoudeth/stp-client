@@ -1,88 +1,24 @@
-version: '3.8'
+version: "3.1"
 
 services:
   stp-client:
-    image: 172.16.4.62:5000/noh/stp-client:dev-b4fd3d1
-    networks:
-      lbb_network:
-        aliases:
-          - stp-client
-    ports:
-      - target: 7003
-        published: 7003
-        mode: ingress
-    secrets:
-      - source: stp-keystore
-        target: /usr/apps/key/LBBCLALABXXX.pfx
-    configs:
-      - source: stp-app-config
-        target: /usr/apps/config_props/application.yml
-      - source: stp-app-config-dev
-        target: /usr/apps/config_props/application-dev.yml
-    volumes:
-      - type: volume
-        source: stp-logs
-        target: /usr/apps/logs
-    environment:
-      - TZ=Asia/Bangkok
-      - SPRING_PROFILES_ACTIVE=local
-    logging:
-      driver: json-file
-      options:
-        max-size: "50m"
-        max-file: "5"
-    command:
-      - java
-      - -jar
-      - stp-client.jar
-      - --spring.config.location=./config_props/application.yml
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:7003/stp-client/actuator/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+    image: 172.16.4.62:5000/noh/stp-client:dev-3671631
     deploy:
       replicas: 1
-      update_config:
-        parallelism: 1
-        delay: 15s
-        failure_action: rollback
-        order: stop-first
-      rollback_config:
-        parallelism: 1
-        delay: 10s
       restart_policy:
         condition: on-failure
-        delay: 10s
-        max_attempts: 3
-        window: 120s
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-      placement:
-        constraints:
-          - node.role == manager
+    environment:
+      TZ: Asia/Bangkok
+      SPRING_PROFILES_ACTIVE: dev
+    ports:
+      - "7003:7003"
+    volumes:
+      - "/opt/stp/logs:/usr/apps/logs"
+      - "/opt/stp/config_props:/usr/apps/config_props"
+      - "/opt/stp/key:/usr/apps/key"
+    networks:
+      - lbb_network
 
 networks:
   lbb_network:
     external: true
-
-volumes:
-  stp-logs:
-    driver: local
-
-configs:
-  stp-app-config:
-    external: true
-  stp-app-config-dev:
-    external: true
-
-secrets:
-  stp-keystore:
-    external: true
-    name: LBBCLALABXXX.pfx
