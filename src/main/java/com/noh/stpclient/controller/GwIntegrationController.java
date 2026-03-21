@@ -49,6 +49,7 @@ public class GwIntegrationController {
     public ResponseEntity<ApiResponse<LogonResponseDto>> logon(@Valid @RequestBody ApiRequest<LogonRequest> request) {
         log.info(">>> START logon >>>");
         log.info("> request body: {}", request);
+        long start = System.currentTimeMillis();
 
         if (request.getData() == null) {
             ApiResponse<LogonResponseDto> finalResponse = responseBuilder.buildFailureResponse(
@@ -61,7 +62,7 @@ public class GwIntegrationController {
                 ? responseBuilder.buildSuccessResponse(serviceResult.getData(), null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
 
-        log.info("< Final response: {}", finalResponse);
+        log.info("< Final response: {} | duration_ms={}", finalResponse, System.currentTimeMillis() - start);
         log.info("<<< END logon request <<<");
         return ResponseEntity.ok(finalResponse);
     }
@@ -76,6 +77,7 @@ public class GwIntegrationController {
     public ResponseEntity<ApiResponse<Void>> logout(@Valid @RequestBody ApiRequest<LogoutRequest> request) {
         log.info(">>> START logout >>>");
         log.info("> request body: {}", request);
+        long start = System.currentTimeMillis();
 
         if (request.getData() == null) {
             ApiResponse<Void> finalResponse = responseBuilder.buildFailureResponse(
@@ -88,7 +90,7 @@ public class GwIntegrationController {
                 ? responseBuilder.buildSuccessResponse(null, null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
 
-        log.info("< Final response: {}", finalResponse);
+        log.info("< Final response: {} | duration_ms={}", finalResponse, System.currentTimeMillis() - start);
         log.info("<<< END logout request <<<");
         return ResponseEntity.ok(finalResponse);
     }
@@ -102,6 +104,7 @@ public class GwIntegrationController {
     public ResponseEntity<ApiResponse<List<GetUpdatesResponseDto>>> getUpdates(@Valid @RequestBody ApiRequest<Void> request) {
         log.info(">>> START getUpdates >>>");
         log.info("> request body: {}", request);
+        long start = System.currentTimeMillis();
 
         ServiceResult<LogonResponseDto> svRsLogon = gwIntegrationService.performLogon();
         if (!svRsLogon.isSuccess()) {
@@ -117,7 +120,7 @@ public class GwIntegrationController {
                 ? responseBuilder.buildSuccessResponse(serviceResult.getData(), null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
 
-        log.info("< Final response: {}", finalResponse);
+        log.info("< Final response: {} | duration_ms={}", finalResponse, System.currentTimeMillis() - start);
         log.info("<<< END getUpdates request <<<");
         return ResponseEntity.ok(finalResponse);
     }
@@ -132,6 +135,7 @@ public class GwIntegrationController {
     public ResponseEntity<ApiResponse<SendResponseDto>> send(@Valid @RequestBody ApiRequest<FinancialTransactionRequest> request) {
         log.info(">>> START send >>>");
         log.info("> request body: {}", request);
+        long start = System.currentTimeMillis();
 
         if (request.getData() == null) {
             ApiResponse<SendResponseDto> finalResponse = responseBuilder.buildFailureResponse(
@@ -154,7 +158,7 @@ public class GwIntegrationController {
                 ? responseBuilder.buildSuccessResponse(srRsSend.getData(), null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(srRsSend, null, Locale.getDefault());
 
-        log.info("< Final response: {}", finalResponse);
+        log.info("< Final response: {} | duration_ms={}", finalResponse, System.currentTimeMillis() - start);
         log.info("<<< END send request <<<");
         return ResponseEntity.ok(finalResponse);
     }
@@ -169,6 +173,7 @@ public class GwIntegrationController {
     public ResponseEntity<ApiResponse<Void>> sendAckNak(@Valid @RequestBody ApiRequest<SendAckNakRequest> request) {
         log.info(">>> START sendAckNak >>>");
         log.info("> request body: {}", request);
+        long start = System.currentTimeMillis();
 
         if (request.getData() == null) {
             ApiResponse<Void> finalResponse = responseBuilder.buildFailureResponse(
@@ -181,7 +186,7 @@ public class GwIntegrationController {
                 ? responseBuilder.buildSuccessResponse(null, null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
 
-        log.info("< Final response: {}", finalResponse);
+        log.info("< Final response: {} | duration_ms={}", finalResponse, System.currentTimeMillis() - start);
         log.info("<<< END sendAckNak request <<<");
         return ResponseEntity.ok(finalResponse);
     }
@@ -196,6 +201,7 @@ public class GwIntegrationController {
     public ResponseEntity<ApiResponse<SendResponseDto>> financialTransaction(@Valid @RequestBody ApiRequest<FinancialTransactionRequest> request) {
         log.info(">>> START financialTransaction >>>");
         log.info("> request body: {}", request);
+        long start = System.currentTimeMillis();
 
         if (request.getData() == null) {
             ApiResponse<SendResponseDto> finalResponse = responseBuilder.buildFailureResponse(
@@ -218,7 +224,7 @@ public class GwIntegrationController {
                 ? responseBuilder.buildSuccessResponse(srRsTransaction.getData(), null, Locale.getDefault())
                 : responseBuilder.buildFailureResponse(srRsTransaction, null, Locale.getDefault());
 
-        log.info("< Final response: {}", finalResponse);
+        log.info("< Final response: {} | duration_ms={}", finalResponse, System.currentTimeMillis() - start);
         log.info("<<< END financialTransaction request <<<");
         return ResponseEntity.ok(finalResponse);
     }

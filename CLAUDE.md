@@ -35,6 +35,38 @@ com.noh.stpclient
 
 ---
 
+## Controller Logging Pattern
+
+Every controller method must follow this exact log structure:
+
+```java
+log.info(">>> START {methodName} >>>");
+log.info("> request body: {}", request);
+long start = System.currentTimeMillis();
+// ... method logic ...
+log.info("< Final response: {} | duration_ms={}", finalResponse, System.currentTimeMillis() - start);
+log.info("<<< END {methodName} request <<<");
+```
+
+Example for `logon`:
+```java
+log.info(">>> START logon >>>");
+log.info("> request body: {}", request);
+long start = System.currentTimeMillis();
+// logic
+log.info("< Final response: {} | duration_ms={}", finalResponse, System.currentTimeMillis() - start);
+log.info("<<< END logon request <<<");
+```
+
+- Use `log.info` (not debug/warn) for all boundary logs
+- Log request body immediately after START
+- Capture `start = System.currentTimeMillis()` right after logging the request body
+- Log final response with `duration_ms` immediately before END
+- `{methodName}` must match the Java method name exactly
+- `requestId` is injected automatically via MDC from `RequestContextFilter` — no manual MDC calls needed in controller
+
+---
+
 ## Critical Patterns
 
 ### Session Management

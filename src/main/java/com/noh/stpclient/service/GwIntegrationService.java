@@ -66,7 +66,7 @@ public class GwIntegrationService {
             log.info("Session ID: {}", sessionId);
             return ServiceResult.success(new LogonResponseDto(sessionId));
         } catch (GatewayIntegrationException e) {
-            log.error(e.getMessage());
+            log.warn("performLogon failed | code={} desc={}", e.getCode(), e.getDescription());
             return ServiceResult.failure(e.getCode(), e.getDescription(), e.getInfo());
         } catch (Exception e) {
             log.error("Logon failed", e);
@@ -80,6 +80,7 @@ public class GwIntegrationService {
             log.info("Logout successful");
             return ServiceResult.success(null);
         } catch (GatewayIntegrationException e) {
+            log.warn("performLogout failed | code={} desc={}", e.getCode(), e.getDescription());
             return ServiceResult.failure(e.getCode(), e.getDescription(), e.getInfo());
         } catch (Exception e) {
             log.error("Logout failed", e);
@@ -110,6 +111,7 @@ public class GwIntegrationService {
                     result = ServiceResult.failure("GW-999", "Gateway GetUpdates Failed");
                 }
             } else {
+                log.warn("GetUpdates failed | sessionId={} code={} desc={}", sessionId, e.getCode(), e.getDescription());
                 result = ServiceResult.failure(e.getCode(), e.getDescription(), e.getInfo());
             }
         } catch (Exception e) {
@@ -130,6 +132,7 @@ public class GwIntegrationService {
         List<GetUpdatesResponseDto> items = response.getItems().stream()
                 .map(GetUpdatesResponseDto::from)
                 .toList();
+        log.info("GetUpdates OK | items={}", items.size());
         return ServiceResult.success(items);
     }
 
@@ -138,6 +141,7 @@ public class GwIntegrationService {
         Assert.hasText(request.sessionId(), "Session ID must not be empty");
         Assert.notNull(request.message(), "Message content cannot be null");
 
+        long start = System.currentTimeMillis();
         ServiceResult<SendResponseDto> result;
         try {
             Send soapRequest = new Send();
@@ -174,11 +178,13 @@ public class GwIntegrationService {
                 }
             }
         } catch (GatewayIntegrationException e) {
+            log.warn("performSend failed | sessionId={} code={} desc={}", request.sessionId(), e.getCode(), e.getDescription());
             result = ServiceResult.failure(e.getCode(), e.getDescription(), e.getInfo());
         } catch (Exception e) {
             log.error("Send failed for session: {}", request.sessionId(), e);
             result = ServiceResult.failure("GW-999", "Gateway Send Failed");
         }
+        log.info("performSend | sessionId={} success={} duration_ms={}", request.sessionId(), result.isSuccess(), System.currentTimeMillis() - start);
         auditService.record(AuditLog.Operation.SEND, request.sessionId(), request, result);
         return result;
     }
@@ -199,10 +205,14 @@ public class GwIntegrationService {
             soapClient.sendAckNak(sessionId, data);
             result = ServiceResult.success(null);
         } catch (GatewayIntegrationException e) {
+            log.warn("performSendAckNak failed | mir={} code={} desc={}", request.mir(), e.getCode(), e.getDescription());
             result = ServiceResult.failure(e.getCode(), e.getDescription(), e.getInfo());
         } catch (Exception e) {
             log.error("SendAckNak failed for mir: {}", request.mir(), e);
             result = ServiceResult.failure("GW-999", "Gateway SendAckNak Failed");
+        }
+        if (result.isSuccess()) {
+            log.info("performSendAckNak OK | sessionId={} mir={} type={}", sessionId, request.mir(), request.type());
         }
         auditService.record(AuditLog.Operation.SEND_ACK_NAK, sessionId, request, result);
         return result;
@@ -216,6 +226,7 @@ public class GwIntegrationService {
         // 1. Insert PENDING audit row + request fields before SOAP call
         long auditLogId = auditService.recordSendBefore(request.sessionId(), request);
 
+        long start = System.currentTimeMillis();
         ServiceResult<SendResponseDto> result;
         try {
             result = doSendFinancialTransaction(request);
@@ -234,6 +245,7 @@ public class GwIntegrationService {
                     result = ServiceResult.failure("GW-999", "Financial transaction send failed");
                 }
             } else {
+                log.warn("performSendFinancialTransaction failed | sessionId={} code={} desc={}", request.sessionId(), e.getCode(), e.getDescription());
                 result = ServiceResult.failure(e.getCode(), e.getDescription(), e.getInfo());
             }
         } catch (JAXBException e) {
@@ -244,6 +256,7 @@ public class GwIntegrationService {
             result = ServiceResult.failure("GW-999", "Financial transaction send failed");
         }
 
+        log.info("performSendFinancialTransaction | sessionId={} success={} duration_ms={}", request.sessionId(), result.isSuccess(), System.currentTimeMillis() - start);
         // 2. Update audit row with result (async — does not block logout)
         auditService.recordSendAfter(auditLogId, result);
         return result;
@@ -255,7 +268,7 @@ public class GwIntegrationService {
         String signedXml = cryptoManager.signXml(xmlContent);
 
         Send soapRequest = buildSend(request, signedXml);
-        log.info("Sending SOAP request block4:\n{}", signedXml);
+        log.debug("Sending SOAP request block4:\n{}", signedXml);
 
         SendResponse response = soapClient.send(soapRequest);
 
@@ -292,6 +305,7 @@ public class GwIntegrationService {
                     result = ServiceResult.failure("GW-999", "Financial transaction failed");
                 }
             } else {
+                log.warn("performFinancialTransaction failed | sessionId={} code={} desc={}", request.sessionId(), e.getCode(), e.getDescription());
                 result = ServiceResult.failure(e.getCode(), e.getDescription(), e.getInfo());
             }
         } catch (JAXBException e) {
@@ -310,7 +324,7 @@ public class GwIntegrationService {
         String xmlContent = dataPDUTransformer.marshalToXml(dataPDU);
         String signedXmlContent = cryptoManager.signXml(xmlContent);
 
-        log.info("Generated signed XML for financial transaction: {}", signedXmlContent);
+        log.debug("Generated signed XML for financial transaction: {}", signedXmlContent);
 
         Send soapRequest = new Send();
         soapRequest.setSessionId(request.sessionId());
