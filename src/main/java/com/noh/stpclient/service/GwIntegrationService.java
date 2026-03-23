@@ -14,7 +14,6 @@ import com.noh.stpclient.utils.CryptoManager;
 import com.noh.stpclient.web.dto.FinancialTransactionRequest;
 import com.noh.stpclient.web.dto.GetUpdatesResponseDto;
 import com.noh.stpclient.web.dto.LogonResponseDto;
-import com.noh.stpclient.web.dto.SendRequest;
 import com.noh.stpclient.web.dto.SendResponseDto;
 
 import java.util.Collections;
@@ -131,56 +130,6 @@ public class GwIntegrationService {
                 .map(GetUpdatesResponseDto::from)
                 .toList();
         return ServiceResult.success(items);
-    }
-
-    public ServiceResult<SendResponseDto> performSend(SendRequest request) {
-        Assert.notNull(request, "Send request cannot be null");
-        Assert.hasText(request.sessionId(), "Session ID must not be empty");
-        Assert.notNull(request.message(), "Message content cannot be null");
-
-        ServiceResult<SendResponseDto> result;
-        try {
-            Send soapRequest = new Send();
-            soapRequest.setSessionId(request.sessionId());
-            Send.Message soapMessage = new Send.Message();
-            soapMessage.setBlock4(request.message().block4());
-            soapMessage.setMsgReceiver(request.message().msgReceiver());
-            soapMessage.setMsgSender(request.message().msgSender());
-            soapMessage.setMsgType(request.message().msgType());
-            soapMessage.setMsgSequence(request.message().msgSequence());
-            soapMessage.setFormat(request.message().format());
-            soapRequest.setMessage(soapMessage);
-
-            SendResponse response = soapClient.send(soapRequest);
-
-            if (response == null || response.getData() == null) {
-                result = ServiceResult.failure("GW-002", "Received empty response from Gateway");
-            } else {
-                SendResponseData data = response.getData();
-                try {
-                    boolean signatureValid = cryptoManager.verifyResponseSignature(data);
-                    if (!signatureValid) {
-                        log.warn("Gateway response signature verification FAILED for session: {}", request.sessionId());
-                    } else {
-                        log.info("Gateway response signature verified OK for session: {}", request.sessionId());
-                    }
-                } catch (Exception e) {
-                    log.warn("Gateway response signature verification error for session: {}: {}", request.sessionId(), e.getMessage());
-                }
-                if ("NAK".equals(data.getType())) {
-                    result = ServiceResult.failure(data.getCode(), data.getDescription());
-                } else {
-                    result = ServiceResult.success(SendResponseDto.from(data));
-                }
-            }
-        } catch (GatewayIntegrationException e) {
-            result = ServiceResult.failure(e.getCode(), e.getDescription(), e.getInfo());
-        } catch (Exception e) {
-            log.error("Send failed for session: {}", request.sessionId(), e);
-            result = ServiceResult.failure("GW-999", "Gateway Send Failed");
-        }
-        auditService.record(AuditLog.Operation.SEND, request.sessionId(), request, result);
-        return result;
     }
 
     public ServiceResult<Void> performSendAckNak(com.noh.stpclient.web.dto.SendAckNakRequest request) {

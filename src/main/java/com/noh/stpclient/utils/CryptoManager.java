@@ -19,6 +19,11 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import javax.xml.crypto.AlgorithmMethod;
+import javax.xml.crypto.KeySelector;
+import javax.xml.crypto.KeySelectorException;
+import javax.xml.crypto.KeySelectorResult;
+import javax.xml.crypto.XMLCryptoContext;
 import javax.xml.crypto.XMLStructure;
 import javax.xml.crypto.dom.DOMStructure;
 import javax.xml.crypto.dsig.CanonicalizationMethod;
@@ -30,10 +35,14 @@ import javax.xml.crypto.dsig.XMLObject;
 import javax.xml.crypto.dsig.XMLSignature;
 import javax.xml.crypto.dsig.XMLSignatureFactory;
 import javax.xml.crypto.dsig.dom.DOMSignContext;
+import javax.xml.crypto.dsig.dom.DOMValidateContext;
 import javax.xml.crypto.dsig.keyinfo.KeyInfo;
 import javax.xml.crypto.dsig.keyinfo.KeyInfoFactory;
 import javax.xml.crypto.dsig.keyinfo.X509Data;
 import javax.xml.crypto.dsig.keyinfo.X509IssuerSerial;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
@@ -133,9 +142,12 @@ public class CryptoManager {
     /**
      * Signs the {@code <Document>} element inside an MX message XML string using XAdES.
      * The resulting {@code <ds:Signature>} is appended inside the {@code <AppHdr>} element
-     * as a child {@code <Sgntr>} node, following the pattern in the sample XmlSigner.
+     * as a child {@code <Sgntr>} node, following the pattern in MXdocument.sign().
      */
     public String signXml(String xmlString) throws Exception {
+        final String xadesNS = "http://uri.etsi.org/01903/v1.3.2#";
+        final String signedpropsIdSuffix = "-signedprops";
+
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         dbf.setNamespaceAware(true);
         org.w3c.dom.Document doc = dbf.newDocumentBuilder()
@@ -148,21 +160,6 @@ public class CryptoManager {
             throw new IllegalStateException("Crypto error, failed to load private key " + keyAlias);
         }
 
-        org.w3c.dom.Document signedDoc = signDocument(doc, certToSign, privateKey);
-
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Transformer transformer = TransformerFactory.newInstance().newTransformer();
-        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-        transformer.transform(new DOMSource(signedDoc), new StreamResult(out));
-        return out.toString(StandardCharsets.UTF_8);
-    }
-
-    private org.w3c.dom.Document signDocument(org.w3c.dom.Document doc,
-                                               X509Certificate signerCertificate,
-                                               PrivateKey privateKey) throws Exception {
-        final String xadesNS = "http://uri.etsi.org/01903/v1.3.2#";
-        final String signedpropsIdSuffix = "-signedprops";
-
         XMLSignatureFactory fac;
         try {
             fac = XMLSignatureFactory.getInstance("DOM", "XMLDSig");
@@ -173,8 +170,8 @@ public class CryptoManager {
         // 1. Prepare KeyInfo
         KeyInfoFactory kif = fac.getKeyInfoFactory();
         X509IssuerSerial x509is = kif.newX509IssuerSerial(
-                signerCertificate.getIssuerX500Principal().toString(),
-                signerCertificate.getSerialNumber());
+                certToSign.getIssuerX500Principal().toString(),
+                certToSign.getSerialNumber());
         X509Data x509data = kif.newX509Data(Collections.singletonList(x509is));
         final String keyInfoId = "_" + UUID.randomUUID().toString();
         KeyInfo ki = kif.newKeyInfo(Collections.singletonList(x509data), keyInfoId);
@@ -207,43 +204,104 @@ public class CryptoManager {
 
         SignedInfo si = fac.newSignedInfo(
                 fac.newCanonicalizationMethod(CanonicalizationMethod.EXCLUSIVE, (XMLStructure) null),
-                fac.newSignatureMethod(SignatureMethod.RSA_SHA1, null),
-                refs);
+                fac.newSignatureMethod(SignatureMethod.RSA_SHA1, null), refs);
 
         // 3. Create element AppHdr/Sgntr that will contain the <ds:Signature>
-        NodeList appHdrNodes = doc.getElementsByTagNameNS("*", "AppHdr");
-        if (appHdrNodes.getLength() == 0) {
-            throw new IllegalStateException("Mandatory element AppHdr is missing in the document to be signed");
-        }
-        Node appHdrNode = appHdrNodes.item(0);
-        Node sgntr = appHdrNode.appendChild(doc.createElementNS(appHdrNode.getNamespaceURI(), "Sgntr"));
+        Node appHdr = null;
+        NodeList sgntrList = doc.getElementsByTagName("AppHdr");
+        if (sgntrList.getLength() != 0)
+            appHdr = sgntrList.item(0);
+
+        if (appHdr == null)
+            throw new Exception("mandatory element AppHdr is missing in the document to be signed");
+
+        Node sgntr = appHdr.appendChild(doc.createElementNS(appHdr.getNamespaceURI(), "Sgntr"));
 
         DOMSignContext dsc = new DOMSignContext(privateKey, sgntr);
         dsc.putNamespacePrefix(XMLSignature.XMLNS, "ds");
 
         // 4. Set up <ds:Object> with <QualifyingProperties> inside that includes SigningTime
-        Element qpElement = doc.createElementNS(xadesNS, "xades:QualifyingProperties");
-        qpElement.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xades", xadesNS);
+        Element QPElement = doc.createElementNS(xadesNS, "xades:QualifyingProperties");
+        QPElement.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xades", xadesNS);
 
-        Element spElement = doc.createElementNS(xadesNS, "xades:SignedProperties");
-        spElement.setAttributeNS(null, "Id", signedpropsId);
-        dsc.setIdAttributeNS(spElement, null, "Id");
-        spElement.setIdAttributeNS(null, "Id", true);
-        qpElement.appendChild(spElement);
+        Element SPElement = doc.createElementNS(xadesNS, "xades:SignedProperties");
+        SPElement.setAttributeNS(null, "Id", signedpropsId);
+        dsc.setIdAttributeNS(SPElement, null, "Id");
+        SPElement.setIdAttributeNS(null, "Id", true);
+        QPElement.appendChild(SPElement);
 
-        Element sspElement = doc.createElementNS(xadesNS, "xades:SignedSignatureProperties");
-        spElement.appendChild(sspElement);
+        Element SSPElement = doc.createElementNS(xadesNS, "xades:SignedSignatureProperties");
+        SPElement.appendChild(SSPElement);
 
-        final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-        Element stElement = doc.createElementNS(xadesNS, "xades:SigningTime");
-        stElement.appendChild(doc.createTextNode(df.format(new Date())));
-        sspElement.appendChild(stElement);
+        final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        String signingTime = df.format(new Date());
 
-        XMLObject object = fac.newXMLObject(
-                Collections.singletonList(new DOMStructure(qpElement)), null, null, null);
+        Element STElement = doc.createElementNS(xadesNS, "xades:SigningTime");
+        STElement.appendChild(doc.createTextNode(signingTime + "Z"));
+        SSPElement.appendChild(STElement);
+
+        DOMStructure qualifPropStruct = new DOMStructure(QPElement);
+        List<DOMStructure> xmlObj = new ArrayList<>();
+        xmlObj.add(qualifPropStruct);
+        XMLObject object = fac.newXMLObject(xmlObj, null, null, null);
+        List<XMLObject> objects = Collections.singletonList(object);
 
         // 5. Set up custom URIDereferencer to process Reference without URI.
-        // This Reference points to element <Document> of MX message.
+        // This Reference points to element <Document> of MX message
+        final NodeList docNodes = doc.getElementsByTagName("Document");
+        final Node docNode = docNodes.item(0);
+
+        ByteArrayOutputStream refOutputStream = new ByteArrayOutputStream();
+        Transformer xform = TransformerFactory.newInstance().newTransformer();
+        xform.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+        xform.transform(new DOMSource(docNode), new StreamResult(refOutputStream));
+        InputStream refInputStream = new ByteArrayInputStream(refOutputStream.toByteArray());
+        dsc.setURIDereferencer(new NoUriDereferencer(refInputStream));
+
+        // 6. Sign it!
+        XMLSignature signature = fac.newXMLSignature(si, ki, objects, null, null);
+        signature.sign(dsc);
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+        transformer.transform(new DOMSource(doc), new StreamResult(out));
+        return out.toString(StandardCharsets.UTF_8).replace("&#13;", "");
+    }
+
+    /**
+     * Verifies the XAdES signature inside a signed DataPDU XML string.
+     * Uses the certificate stored under {@code ks.alias} in the keystore.
+     */
+    public boolean verifyXml(String xmlString) throws Exception {
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        dbf.setNamespaceAware(true);
+        org.w3c.dom.Document doc = dbf.newDocumentBuilder()
+                .parse(new ByteArrayInputStream(xmlString.getBytes(StandardCharsets.UTF_8)));
+
+        KeyStore privateKS = loadKeystore();
+        final X509Certificate signerCertificate = (X509Certificate) privateKS.getCertificate(keyAlias);
+
+        XPath xpath = XPathFactory.newInstance().newXPath();
+        NodeList nodes = (NodeList) xpath.evaluate(
+                "//*[local-name()='Signature']", doc.getDocumentElement(), XPathConstants.NODESET);
+
+        if (nodes == null || nodes.getLength() == 0)
+            throw new IllegalStateException("Signature is missing in the document");
+
+        Node nodeSignature = nodes.item(0);
+
+        KeySelector mockKeySelector = new KeySelector() {
+            @Override
+            public KeySelectorResult select(KeyInfo keyInfo, Purpose purpose,
+                                            AlgorithmMethod method, XMLCryptoContext context)
+                    throws KeySelectorException {
+                return () -> signerCertificate.getPublicKey();
+            }
+        };
+
+        XMLSignatureFactory fac = XMLSignatureFactory.getInstance("DOM");
+
         NodeList docNodes = doc.getElementsByTagNameNS("*", "Document");
         Node docNode = docNodes.item(0);
 
@@ -252,13 +310,21 @@ public class CryptoManager {
         xform.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
         xform.transform(new DOMSource(docNode), new StreamResult(refOut));
         InputStream refInputStream = new ByteArrayInputStream(refOut.toByteArray());
-        dsc.setURIDereferencer(new NoUriDereferencer(refInputStream));
 
-        // 6. Sign it!
-        XMLSignature signature = fac.newXMLSignature(si, ki, Collections.singletonList(object), null, null);
-        signature.sign(dsc);
+        DOMValidateContext valContext = new DOMValidateContext(mockKeySelector, nodeSignature);
+        valContext.setProperty("org.jcp.xml.dsig.secureValidation", Boolean.FALSE);
+        valContext.setURIDereferencer(new NoUriDereferencer(refInputStream));
 
-        return doc;
+        // Register SignedProperties Id — required since Java 1.7.0_25+ (JDK-8019379)
+        NodeList nl = doc.getElementsByTagNameNS("http://uri.etsi.org/01903/v1.3.2#", "SignedProperties");
+        if (nl.getLength() == 0)
+            throw new IllegalStateException("SignedProperties is missing in signature");
+
+        Element elemSignedProps = (Element) nl.item(0);
+        valContext.setIdAttributeNS(elemSignedProps, null, "Id");
+
+        XMLSignature signature = fac.unmarshalXMLSignature(valContext);
+        return signature.validate(valContext);
     }
 
     /**
