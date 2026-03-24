@@ -19,6 +19,9 @@ logging:
     com.noh.stpclient.config.interceptor: DEBUG
 
 stp:
+  soap:
+    msg-receiver: LPDRLALAXATS
+    msg-sender: LBBCLALABXXX
   polling:
     enabled: false
     delay-ms: 55000

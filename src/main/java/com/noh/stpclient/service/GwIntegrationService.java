@@ -17,6 +17,11 @@ import com.noh.stpclient.web.dto.LogonResponseDto;
 import com.noh.stpclient.web.dto.SendRequest;
 import com.noh.stpclient.web.dto.SendResponseDto;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 
@@ -43,21 +48,28 @@ public class GwIntegrationService {
     private static final String RTGS_MSG_TYPE = "pacs.009.001.08";
     private static final String RTGS_FORMAT   = "MX";
 
-    @Value("${stp.soap.rtgs-receiver}")
-    private String rtgsMsgReceiver;
+    @Value("${stp.soap.msg-receiver}")
+    private String msgReceiver;
+    @Value("${stp.soap.msg-sender}")
+    private String msgSender;
+
+    @Value("${stp.xml.output-dir:xmlfile}")
+    private String xmlOutputDir;
 
     public GwIntegrationService(GWClientMuRemote soapClient,
                                 CryptoManager cryptoManager,
                                 DataPDUTransformer dataPDUTransformer,
                                 AuditService auditService,
                                 SessionManager sessionManager,
-                                @Value("${stp.soap.rtgs-receiver}") String rtgsMsgReceiver) {
+                                @Value("${stp.soap.msg-receiver}") String msgReceiver,
+                                @Value("${stp.soap.msg-sender}") String msgSender) {
         this.soapClient = soapClient;
         this.cryptoManager = cryptoManager;
         this.dataPDUTransformer = dataPDUTransformer;
         this.auditService = auditService;
         this.sessionManager = sessionManager;
-        this.rtgsMsgReceiver = rtgsMsgReceiver;
+        this.msgReceiver = msgReceiver;
+        this.msgSender = msgSender;
     }
 
     public ServiceResult<LogonResponseDto> performLogon() {
@@ -265,7 +277,13 @@ public class GwIntegrationService {
     private ServiceResult<SendResponseDto> doSendFinancialTransaction(FinancialTransactionRequest request) throws Exception {
         DataPDU dataPDU = dataPDUTransformer.transformToDataPDU(request);
         String xmlContent = dataPDUTransformer.marshalToXml(dataPDU);
+
+        String msgId = request.transaction().messageId();
+        String ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMdd_HHmmss"));
+        saveXmlFile(msgId + "_" + ts + "_raw.xml", xmlContent);
+
         String signedXml = cryptoManager.signXml(xmlContent);
+        saveXmlFile(msgId + "_" + ts + "_signed.xml", signedXml);
 
         Send soapRequest = buildSend(request, signedXml);
         log.debug("Sending SOAP request block4:\n{}", signedXml);
@@ -282,6 +300,17 @@ public class GwIntegrationService {
         return ServiceResult.success(SendResponseDto.from(data));
     }
 
+    private void saveXmlFile(String filename, String content) {
+        try {
+            Path dir = Paths.get(xmlOutputDir);
+            Files.createDirectories(dir);
+            Files.writeString(dir.resolve(filename), content);
+            log.debug("Saved XML file: {}/{}", xmlOutputDir, filename);
+        } catch (Exception e) {
+            log.warn("Failed to save XML file {}: {}", filename, e.getMessage());
+        }
+    }
+
     /**
      * Assembles the SOAP Send request from the transaction request and the XAdES-signed XML.
      * block4 carries the signed MX document; receiver is the configured RTGS endpoint.
@@ -291,8 +320,8 @@ public class GwIntegrationService {
         soapRequest.setSessionId(request.sessionId());
         Send.Message msg = new Send.Message();
         msg.setBlock4(signedXml);
-        msg.setMsgReceiver(rtgsMsgReceiver);
-        msg.setMsgSender(request.transaction().senderBic());
+        msg.setMsgReceiver(this.msgReceiver);
+        msg.setMsgSender(this.msgSender);
         msg.setMsgType(RTGS_MSG_TYPE);
         msg.setMsgSequence(request.transaction().msgSequence());
         msg.setFormat(RTGS_FORMAT);

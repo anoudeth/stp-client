@@ -4,7 +4,6 @@ stp:
     url: http://172.16.2.8:7080/GWClientMUService/GWClientMU
     username: LBBCLALABXXX
     password: lbb@2026
-    rtgs-receiver: LPDRLALAXATS
 
 ks:
   type: PKCS12
