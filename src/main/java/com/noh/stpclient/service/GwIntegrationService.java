@@ -282,73 +282,10 @@ public class GwIntegrationService {
         return ServiceResult.success(SendResponseDto.from(data));
     }
 
-    public ServiceResult<SendResponseDto> performFinancialTransaction(FinancialTransactionRequest request) {
-        Assert.notNull(request, "Financial transaction request cannot be null");
-        Assert.hasText(request.sessionId(), "Session ID must not be empty");
-        Assert.notNull(request.transaction(), "Transaction data cannot be null");
-
-        ServiceResult<SendResponseDto> result;
-        try {
-            result = doFinancialTransaction(request);
-        } catch (GatewayIntegrationException e) {
-            if (sessionManager.isSessionExpired(e)) {
-                log.warn("Session {} expired during financial transaction — refreshing and retrying", request.sessionId());
-                sessionManager.invalidate(request.sessionId());
-                String freshSession = sessionManager.getOrCreate();
-                FinancialTransactionRequest retryRequest = new FinancialTransactionRequest(freshSession, request.transaction());
-                try {
-                    result = doFinancialTransaction(retryRequest);
-                } catch (GatewayIntegrationException retryEx) {
-                    result = ServiceResult.failure(retryEx.getCode(), retryEx.getDescription(), retryEx.getInfo());
-                } catch (Exception retryEx) {
-                    log.error("Financial transaction retry failed for session: {}", freshSession, retryEx);
-                    result = ServiceResult.failure("GW-999", "Financial transaction failed");
-                }
-            } else {
-                log.warn("performFinancialTransaction failed | sessionId={} code={} desc={}", request.sessionId(), e.getCode(), e.getDescription());
-                result = ServiceResult.failure(e.getCode(), e.getDescription(), e.getInfo());
-            }
-        } catch (JAXBException e) {
-            log.error("XML marshaling failed for financial transaction", e);
-            result = ServiceResult.failure("GW-003", "XML transformation failed: " + e.getMessage());
-        } catch (Exception e) {
-            log.error("Financial transaction failed for session: {}", request.sessionId(), e);
-            result = ServiceResult.failure("GW-999", "Financial transaction failed");
-        }
-        auditService.record(AuditLog.Operation.SEND, request.sessionId(), request, result);
-        return result;
-    }
-
-    private ServiceResult<SendResponseDto> doFinancialTransaction(FinancialTransactionRequest request) throws Exception {
-        DataPDU dataPDU = dataPDUTransformer.transformToDataPDU(request);
-        String xmlContent = dataPDUTransformer.marshalToXml(dataPDU);
-        String signedXmlContent = cryptoManager.signXml(xmlContent);
-
-        log.debug("Generated signed XML for financial transaction: {}", signedXmlContent);
-
-        Send soapRequest = new Send();
-        soapRequest.setSessionId(request.sessionId());
-        Send.Message soapMessage = new Send.Message();
-        soapMessage.setBlock4(signedXmlContent);
-        soapMessage.setMsgReceiver(rtgsMsgReceiver);
-        soapMessage.setMsgSender(request.transaction().senderBic());
-        soapMessage.setMsgType(RTGS_MSG_TYPE);
-        soapMessage.setMsgSequence(request.transaction().msgSequence());
-        soapMessage.setFormat(RTGS_FORMAT);
-        soapRequest.setMessage(soapMessage);
-
-        SendResponse response = soapClient.send(soapRequest);
-
-        if (response == null || response.getData() == null) {
-            return ServiceResult.failure("GW-002", "Received empty response from Gateway");
-        }
-        SendResponseData data = response.getData();
-        if ("NAK".equals(data.getType())) {
-            return ServiceResult.failure(data.getCode(), data.getDescription());
-        }
-        return ServiceResult.success(SendResponseDto.from(data));
-    }
-
+    /**
+     * Assembles the SOAP Send request from the transaction request and the XAdES-signed XML.
+     * block4 carries the signed MX document; receiver is the configured RTGS endpoint.
+     */
     private Send buildSend(FinancialTransactionRequest request, String signedXml) {
         Send soapRequest = new Send();
         soapRequest.setSessionId(request.sessionId());

@@ -190,42 +190,4 @@ public class GwIntegrationController {
         log.info("<<< END sendAckNak request <<<");
         return ResponseEntity.ok(finalResponse);
     }
-
-    @Operation(summary = "Submit financial transaction (full flow)", description = "End-to-end financial transaction submission: authenticates with the gateway, builds the SWIFT message, and sends it. Equivalent to /gw/send but uses the full transaction processing pipeline.")
-    @ApiResponses(value = {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Transaction processed (check resStatus for gateway result)",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Request data is null or validation failed")
-    })
-    @PostMapping("/financial-transaction")
-    public ResponseEntity<ApiResponse<SendResponseDto>> financialTransaction(@Valid @RequestBody ApiRequest<FinancialTransactionRequest> request) {
-        log.info(">>> START financialTransaction >>>");
-        log.info("> request body: {}", request);
-        long start = System.currentTimeMillis();
-
-        if (request.getData() == null) {
-            ApiResponse<SendResponseDto> finalResponse = responseBuilder.buildFailureResponse(
-                    ServiceResult.failure("VALIDATION-001", "Request data cannot be null"), null, Locale.getDefault());
-            return ResponseEntity.badRequest().body(finalResponse);
-        }
-
-        ServiceResult<LogonResponseDto> svRsLogon = gwIntegrationService.performLogon();
-        if (!svRsLogon.isSuccess()) {
-            ApiResponse<SendResponseDto> failureResponse = responseBuilder.buildFailureResponse(
-                    ServiceResult.failure(svRsLogon.getErrorCode(), svRsLogon.getErrorMessage()), null, Locale.getDefault());
-            return ResponseEntity.ok(failureResponse);
-        }
-
-        final String sessionId = svRsLogon.getData().sessionId();
-        FinancialTransactionRequest transactionRequest = new FinancialTransactionRequest(sessionId, request.getData().transaction());
-        ServiceResult<SendResponseDto> srRsTransaction = gwIntegrationService.performFinancialTransaction(transactionRequest);
-
-        ApiResponse<SendResponseDto> finalResponse = srRsTransaction.isSuccess()
-                ? responseBuilder.buildSuccessResponse(srRsTransaction.getData(), null, Locale.getDefault())
-                : responseBuilder.buildFailureResponse(srRsTransaction, null, Locale.getDefault());
-
-        log.info("< Final response: {} | duration_ms={}", finalResponse, System.currentTimeMillis() - start);
-        log.info("<<< END financialTransaction request <<<");
-        return ResponseEntity.ok(finalResponse);
-    }
 }
