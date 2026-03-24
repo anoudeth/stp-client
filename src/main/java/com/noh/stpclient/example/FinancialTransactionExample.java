@@ -34,27 +34,29 @@ public class FinancialTransactionExample {
      */
     public static FinancialTransactionRequest createSampleRequest() {
         var transaction = new FinancialTransactionRequest.TransactionData(
-            "2605501332860000",                    // messageId
+            "2605501332860000",                      // messageId
             "123",                                   // msgSequence
-            "2605501332860000",                    // businessMessageId
-            "LBBCLALABXXX",                            // senderBic
-            "LPDRLALAXATS",                            // receiverBic   // BOL
-            "LBBCLALABXXX",                            // instructingAgentBic
-            "COEBLALAXXX",                         // instructedAgentBic
-            "LBBCLALABXXX",                            // debtorAgentBic
-            "USD",                                 // currency
-            new BigDecimal("64000"),               // amount
-            "2026-02-25",                          // settlementDate
-            "MR KHAMCHANH SOULIGNAPHANH",          // debtorName
-            "0700000864347",                       // debtorAccount
-            "0000010001150512",                    // debtorAgentAccount
-            "SOMPHONE SAIYAVONG MR",               // creditorName
-            "0961227683628",                       // creditorAccount
-            "0000010000200510",                    // creditorAgentAccount
+            "pacs.009.001.08",                       // msgType
+            "RTGS",                                  // bizSvc
+            "2605501332860000",                      // businessMessageId
+            "LBBCLALABXXX",                          // senderBic
+            "LPDRLALAXATS",                          // receiverBic   // BOL
+            "LBBCLALABXXX",                          // instructingAgentBic
+            "COEBLALAXXX",                           // instructedAgentBic
+            "LBBCLALABXXX",                          // debtorAgentBic
+            "USD",                                   // currency
+            new BigDecimal("64000"),                 // amount
+            "2026-02-25",                            // settlementDate
+            "MR KHAMCHANH SOULIGNAPHANH",            // debtorName
+            "0700000864347",                         // debtorAccount
+            "0000010001150512",                      // debtorAgentAccount
+            "SOMPHONE SAIYAVONG MR",                 // creditorName
+            "0961227683628",                         // creditorAccount
+            "0000010000200510",                      // creditorAgentAccount
             List.of(" PHOXAY", " ", " PHOXAY", " "), // debtorAddressLines
-            null,                                  // creditorAddressLines
-            "/BNF/",                               // instrForNxtAgt
-            "PURCHASE FOR GOODS"                   // remittanceInformation
+            List.of("CREDITOR NAME", "Vientiane, Lao PDR"), // creditorAddressLines
+            "/BNF/",                                 // instrForNxtAgt
+            "PURCHASE FOR GOODS"                     // remittanceInformation
         );
 
         return new FinancialTransactionRequest(

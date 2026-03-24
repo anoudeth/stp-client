@@ -5,6 +5,7 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlValue;
 import lombok.Data;
 
 import java.util.List;
@@ -241,9 +242,10 @@ public class DataPDU {
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class IntrBkSttlmAmt {
-        
+
+        @XmlValue
         private String value;
-        
+
         @XmlAttribute(name = "Ccy")
         private String ccy;
     }

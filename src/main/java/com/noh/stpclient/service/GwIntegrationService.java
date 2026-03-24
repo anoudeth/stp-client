@@ -25,7 +25,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 
+import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
+import java.io.StringWriter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -45,8 +47,7 @@ public class GwIntegrationService {
     private final AuditService auditService;
     private final SessionManager sessionManager;
 
-    private static final String RTGS_MSG_TYPE = "pacs.009.001.08";
-    private static final String RTGS_FORMAT   = "MX";
+    private static final String MSG_FORMAT = "MX";
 
     @Value("${stp.soap.msg-receiver}")
     private String msgReceiver;
@@ -279,7 +280,7 @@ public class GwIntegrationService {
         String xmlContent = dataPDUTransformer.marshalToXml(dataPDU);
 
         String msgId = request.transaction().messageId();
-        String ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMdd_HHmmss"));
+        String ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMddHHmmss"));
         saveXmlFile(msgId + "_" + ts + "_raw.xml", xmlContent);
 
         String signedXml = cryptoManager.signXml(xmlContent);
@@ -287,6 +288,10 @@ public class GwIntegrationService {
 
         Send soapRequest = buildSend(request, signedXml);
         log.debug("Sending SOAP request block4:\n{}", signedXml);
+
+        StringWriter soapRequestWriter = new StringWriter();
+        JAXBContext.newInstance(Send.class).createMarshaller().marshal(soapRequest, soapRequestWriter);
+        saveXmlFile(msgId + "_" + ts + "_send.xml", soapRequestWriter.toString());
 
         SendResponse response = soapClient.send(soapRequest);
 
@@ -322,9 +327,9 @@ public class GwIntegrationService {
         msg.setBlock4(signedXml);
         msg.setMsgReceiver(this.msgReceiver);
         msg.setMsgSender(this.msgSender);
-        msg.setMsgType(RTGS_MSG_TYPE);
+        msg.setMsgType(request.transaction().msgType());
         msg.setMsgSequence(request.transaction().msgSequence());
-        msg.setFormat(RTGS_FORMAT);
+        msg.setFormat(MSG_FORMAT);
         soapRequest.setMessage(msg);
         return soapRequest;
     }

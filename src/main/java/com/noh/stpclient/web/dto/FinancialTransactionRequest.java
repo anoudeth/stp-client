@@ -38,6 +38,14 @@ public record FinancialTransactionRequest(
             @Schema(description = "SWIFT message sequence number", example = "0000001")
             String msgSequence,
 
+            @NotBlank(message = "Message type cannot be blank")
+            @Schema(description = "SWIFT message type", example = "pacs.009.001.08")
+            String msgType,
+
+            @NotBlank(message = "Business service cannot be blank")
+            @Schema(description = "Business service identifier for AppHdr", example = "RTGS")
+            String bizSvc,
+
             @NotBlank(message = "Business message ID cannot be blank")
             @Schema(description = "Business-level message identifier (EndToEndId)", example = "BIZID-20260314-001")
             String businessMessageId,
@@ -99,10 +107,12 @@ public record FinancialTransactionRequest(
             @Schema(description = "Creditor agent's nostro/settlement account", example = "0299990000002")
             String creditorAgentAccount,
 
-            @Schema(description = "Debtor's address lines (optional, max 2 lines)", example = "[\"123 Lane Xang Avenue\", \"Vientiane, Lao PDR\"]")
+            @NotNull(message = "Debtor address lines cannot be null")
+            @Schema(description = "Debtor's address lines (max 2 lines)", example = "[\"123 Lane Xang Avenue\", \"Vientiane, Lao PDR\"]")
             List<String> debtorAddressLines,
 
-            @Schema(description = "Creditor's address lines (optional, max 2 lines)", example = "[\"456 Samsenthai Road\", \"Vientiane, Lao PDR\"]")
+            @NotNull(message = "Creditor address lines cannot be null")
+            @Schema(description = "Creditor's address lines (max 2 lines)", example = "[\"456 Samsenthai Road\", \"Vientiane, Lao PDR\"]")
             List<String> creditorAddressLines,
 
             @Schema(description = "Instructions for the next agent (optional)", example = "/RETN/")
