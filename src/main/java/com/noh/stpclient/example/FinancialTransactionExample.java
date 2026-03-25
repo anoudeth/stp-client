@@ -36,7 +36,7 @@ public class FinancialTransactionExample {
         var transaction = new FinancialTransactionRequest.TransactionData(
             "2605501332860000",                      // messageId
             "123",                                   // msgSequence
-            "pacs.009.001.08",                       // msgType
+            "pacs.008.001.08",                       // msgType
             "RTGS",                                  // bizSvc
             "2605501332860000",                      // businessMessageId
             "LBBCLALABXXX",                          // senderBic
@@ -105,7 +105,7 @@ public class FinancialTransactionExample {
         FinancialTransactionRequest request = createSampleRequest();
 
         DataPDUTransformer transformer = new DataPDUTransformer();
-        String xml = transformer.marshalToXml(transformer.transformToDataPDU(request));
+        String xml = transformer.marshalToXml(transformer.transformToDataPDU(request), request.transaction().msgType());
         log.info("Generated XML:\n{}", xml);
 
         CryptoManager cryptoManager = new CryptoManager();
@@ -125,7 +125,7 @@ public class FinancialTransactionExample {
         msg.setBlock4(signedXml);
         msg.setMsgReceiver(request.transaction().receiverBic());
         msg.setMsgSender(request.transaction().senderBic());
-        msg.setMsgType("pacs.009.001.08");
+        msg.setMsgType(request.transaction().msgType());
         msg.setMsgSequence(request.transaction().msgSequence());
         msg.setFormat("MX");
         send.setMessage(msg);

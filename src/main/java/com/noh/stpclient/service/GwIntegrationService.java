@@ -277,7 +277,7 @@ public class GwIntegrationService {
 
     private ServiceResult<SendResponseDto> doSendFinancialTransaction(FinancialTransactionRequest request) throws Exception {
         DataPDU dataPDU = dataPDUTransformer.transformToDataPDU(request);
-        String xmlContent = dataPDUTransformer.marshalToXml(dataPDU);
+        String xmlContent = dataPDUTransformer.marshalToXml(dataPDU, request.transaction().msgType());
 
         String msgId = request.transaction().messageId();
         String ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMddHHmmss"));

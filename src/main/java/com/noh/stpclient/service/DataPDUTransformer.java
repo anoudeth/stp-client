@@ -271,7 +271,7 @@ public class DataPDUTransformer {
     /**
      * Marshals DataPDU object to XML string.
      */
-    public String marshalToXml(DataPDU dataPDU) throws JAXBException {
+    public String marshalToXml(DataPDU dataPDU, String msgType) throws JAXBException {
         JAXBContext jaxbContext = JAXBContext.newInstance(DataPDU.class);
         Marshaller marshaller = jaxbContext.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
@@ -280,7 +280,7 @@ public class DataPDUTransformer {
         StringWriter writer = new StringWriter();
         marshaller.marshal(dataPDU, writer);
 
-        String xml = normalizeNamespacePrefixes(writer.toString());
+        String xml = normalizeNamespacePrefixes(writer.toString(), msgType);
         log.debug("Generated XML: {}", xml);
 
         return xml;
@@ -294,7 +294,7 @@ public class DataPDUTransformer {
      *   <AppHdr xmlns="urn:iso:std:iso:20022:tech:xsd:head.001.001.01">
      *   <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
      */
-    private String normalizeNamespacePrefixes(String xml) {
+    private String normalizeNamespacePrefixes(String xml, String msgType) {
         // Collect all xmlns:nsX="uri" declarations
         Matcher m = Pattern.compile("\\s+xmlns:(\\S+?)=\"([^\"]+)\"").matcher(xml);
         Map<String, String> uriToPrefix = new HashMap<>();
@@ -304,11 +304,14 @@ public class DataPDUTransformer {
 
         String stpNs  = "urn:cma:stp:xsd:stp.1.0";
         String headNs = "urn:iso:std:iso:20022:tech:xsd:head.001.001.01";
-        String pacsNs = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+        // JAXB uses the compile-time namespace to generate a prefix; we look it up by that key
+        // then emit the namespace derived from the runtime msgType
+        String pacsNsJaxb   = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08";
+        String pacsNsActual = "urn:iso:std:iso:20022:tech:xsd:" + msgType;
 
         String stpPfx  = uriToPrefix.get(stpNs);
         String headPfx = uriToPrefix.get(headNs);
-        String pacsPfx = uriToPrefix.get(pacsNs);
+        String pacsPfx = uriToPrefix.get(pacsNsJaxb);
 
         // Strip all xmlns:nsX declarations from root element
         String result = xml.replaceAll("\\s+xmlns:\\S+?=\"[^\"]+\"", "");
@@ -323,7 +326,7 @@ public class DataPDUTransformer {
             result = result.replace("</" + headPfx + ":AppHdr>", "</AppHdr>");
         }
         if (pacsPfx != null) {
-            result = result.replace("<"  + pacsPfx + ":Document",  "<Document xmlns=\"" + pacsNs + "\"");
+            result = result.replace("<"  + pacsPfx + ":Document",  "<Document xmlns=\"" + pacsNsActual + "\"");
             result = result.replace("</" + pacsPfx + ":Document>", "</Document>");
         }
 

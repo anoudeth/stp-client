@@ -39,7 +39,7 @@ public record FinancialTransactionRequest(
             String msgSequence,
 
             @NotBlank(message = "Message type cannot be blank")
-            @Schema(description = "SWIFT message type", example = "pacs.009.001.08")
+            @Schema(description = "SWIFT message type", example = "pacs.008.001.08")
             String msgType,
 
             @NotBlank(message = "Business service cannot be blank")
