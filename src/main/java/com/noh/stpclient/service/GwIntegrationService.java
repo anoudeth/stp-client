@@ -25,9 +25,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 
-import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
-import java.io.StringWriter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -242,24 +240,35 @@ public class GwIntegrationService {
         long start = System.currentTimeMillis();
         ServiceResult<SendResponseDto> result;
         try {
-            result = doSendFinancialTransaction(request);
-        } catch (GatewayIntegrationException e) {
-            if (sessionManager.isSessionExpired(e)) {
-                log.warn("Session {} expired during Send — refreshing and retrying", request.sessionId());
-                sessionManager.invalidate(request.sessionId());
-                String freshSession = sessionManager.getOrCreate();
-                FinancialTransactionRequest retryRequest = new FinancialTransactionRequest(freshSession, request.transaction());
-                try {
-                    result = doSendFinancialTransaction(retryRequest);
-                } catch (GatewayIntegrationException retryEx) {
-                    result = ServiceResult.failure(retryEx.getCode(), retryEx.getDescription(), retryEx.getInfo());
-                } catch (Exception retryEx) {
-                    log.error("Send retry failed for session: {}", freshSession, retryEx);
-                    result = ServiceResult.failure("GW-999", "Financial transaction send failed");
+            // Build and sign XML once — not repeated on session-expiry retry
+            DataPDU dataPDU = dataPDUTransformer.transformToDataPDU(request);
+            String xmlContent = dataPDUTransformer.marshalToXml(dataPDU, request.transaction().msgType());
+            String msgId = request.transaction().messageId();
+            String ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMddHHmmss"));
+            saveXmlFile(msgId + "_" + ts + "_raw.xml", xmlContent);
+            String signedXml = cryptoManager.signXml(xmlContent);
+            saveXmlFile(msgId + "_" + ts + "_signed.xml", signedXml);
+
+            try {
+                result = doSendFinancialTransaction(request, signedXml);
+            } catch (GatewayIntegrationException e) {
+                if (sessionManager.isSessionExpired(e)) {
+                    log.warn("Session {} expired during Send — refreshing and retrying", request.sessionId());
+                    sessionManager.invalidate(request.sessionId());
+                    String freshSession = sessionManager.getOrCreate();
+                    FinancialTransactionRequest retryRequest = new FinancialTransactionRequest(freshSession, request.transaction());
+                    try {
+                        result = doSendFinancialTransaction(retryRequest, signedXml);
+                    } catch (GatewayIntegrationException retryEx) {
+                        result = ServiceResult.failure(retryEx.getCode(), retryEx.getDescription(), retryEx.getInfo());
+                    } catch (Exception retryEx) {
+                        log.error("Send retry failed for session: {}", freshSession, retryEx);
+                        result = ServiceResult.failure("GW-999", "Financial transaction send failed");
+                    }
+                } else {
+                    log.warn("performSendFinancialTransaction failed | sessionId={} code={} desc={}", request.sessionId(), e.getCode(), e.getDescription());
+                    result = ServiceResult.failure(e.getCode(), e.getDescription(), e.getInfo());
                 }
-            } else {
-                log.warn("performSendFinancialTransaction failed | sessionId={} code={} desc={}", request.sessionId(), e.getCode(), e.getDescription());
-                result = ServiceResult.failure(e.getCode(), e.getDescription(), e.getInfo());
             }
         } catch (JAXBException e) {
             log.error("XML marshaling failed for financial transaction", e);
@@ -275,23 +284,9 @@ public class GwIntegrationService {
         return result;
     }
 
-    private ServiceResult<SendResponseDto> doSendFinancialTransaction(FinancialTransactionRequest request) throws Exception {
-        DataPDU dataPDU = dataPDUTransformer.transformToDataPDU(request);
-        String xmlContent = dataPDUTransformer.marshalToXml(dataPDU, request.transaction().msgType());
-
-        String msgId = request.transaction().messageId();
-        String ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMddHHmmss"));
-        saveXmlFile(msgId + "_" + ts + "_raw.xml", xmlContent);
-
-        String signedXml = cryptoManager.signXml(xmlContent);
-        saveXmlFile(msgId + "_" + ts + "_signed.xml", signedXml);
-
+    private ServiceResult<SendResponseDto> doSendFinancialTransaction(FinancialTransactionRequest request, String signedXml) throws GatewayIntegrationException {
         Send soapRequest = buildSend(request, signedXml);
         log.debug("Sending SOAP request block4:\n{}", signedXml);
-
-        StringWriter soapRequestWriter = new StringWriter();
-        JAXBContext.newInstance(Send.class).createMarshaller().marshal(soapRequest, soapRequestWriter);
-        saveXmlFile(msgId + "_" + ts + "_send.xml", soapRequestWriter.toString());
 
         SendResponse response = soapClient.send(soapRequest);
 
