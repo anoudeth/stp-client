@@ -8,12 +8,14 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlValue;
 import lombok.Data;
 
-import java.util.List;
-
+/**
+ * JAXB model for pacs.009.001.08 — Financial Institution Credit Transfer.
+ * Document root element is FICdtTrf; Dbtr/Cdtr are financial institutions (FinInstnId/BICFI).
+ */
 @Data
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "DataPDU", namespace = "urn:cma:stp:xsd:stp.1.0")
-public class DataPDU {
+public class DataPDU009 {
 
     @XmlElement(name = "Body")
     private Body body;
@@ -25,7 +27,7 @@ public class DataPDU {
         @XmlElement(name = "AppHdr", namespace = "urn:iso:std:iso:20022:tech:xsd:head.001.001.01")
         private AppHdr appHdr;
 
-        @XmlElement(name = "Document", namespace = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08")
+        @XmlElement(name = "Document", namespace = "urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08")
         private Document document;
     }
 
@@ -88,13 +90,13 @@ public class DataPDU {
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class Document {
 
-        @XmlElement(name = "FIToFICstmrCdtTrf")
-        private FIToFICstmrCdtTrf fiToFICstmrCdtTrf;
+        @XmlElement(name = "FICdtTrf")
+        private FICdtTrf fiCdtTrf;
     }
 
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
-    public static class FIToFICstmrCdtTrf {
+    public static class FICdtTrf {
 
         @XmlElement(name = "GrpHdr")
         private GrpHdr grpHdr;
@@ -144,9 +146,6 @@ public class DataPDU {
         @XmlElement(name = "IntrBkSttlmDt")
         private String intrBkSttlmDt;
 
-        @XmlElement(name = "ChrgBr")
-        private String chrgBr;
-
         @XmlElement(name = "InstgAgt")
         private InstgAgt instgAgt;
 
@@ -159,18 +158,6 @@ public class DataPDU {
         @XmlElement(name = "DbtrAcct")
         private DbtrAcct dbtrAcct;
 
-        @XmlElement(name = "DbtrAgt")
-        private DbtrAgt dbtrAgt;
-
-        @XmlElement(name = "DbtrAgtAcct")
-        private DbtrAgtAcct dbtrAgtAcct;
-
-        @XmlElement(name = "CdtrAgt")
-        private CdtrAgt cdtrAgt;
-
-        @XmlElement(name = "CdtrAgtAcct")
-        private CdtrAgtAcct cdtrAgtAcct;
-
         @XmlElement(name = "Cdtr")
         private Cdtr cdtr;
 
@@ -179,9 +166,6 @@ public class DataPDU {
 
         @XmlElement(name = "InstrForNxtAgt")
         private InstrForNxtAgt instrForNxtAgt;
-
-        @XmlElement(name = "RmtInf")
-        private RmtInf rmtInf;
     }
 
     @Data
@@ -266,23 +250,13 @@ public class DataPDU {
         private FinInstnId finInstnId;
     }
 
+    /** Financial institution debtor — identified by BICFI only */
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class Dbtr {
 
-        @XmlElement(name = "Nm")
-        private String nm;
-
-        @XmlElement(name = "PstlAdr")
-        private PstlAdr pstlAdr;
-    }
-
-    @Data
-    @XmlAccessorType(XmlAccessType.FIELD)
-    public static class PstlAdr {
-
-        @XmlElement(name = "AdrLine")
-        private List<String> adrLine;
+        @XmlElement(name = "FinInstnId")
+        private FinInstnId finInstnId;
     }
 
     @Data
@@ -293,55 +267,13 @@ public class DataPDU {
         private Id id;
     }
 
-    @Data
-    @XmlAccessorType(XmlAccessType.FIELD)
-    public static class DbtrAgt {
-
-        @XmlElement(name = "FinInstnId")
-        private FinInstnId finInstnId;
-    }
-
-    @Data
-    @XmlAccessorType(XmlAccessType.FIELD)
-    public static class DbtrAgtAcct {
-
-        @XmlElement(name = "Id")
-        private Id id;
-    }
-
-    @Data
-    @XmlAccessorType(XmlAccessType.FIELD)
-    public static class CdtrAgt {
-
-        @XmlElement(name = "FinInstnId")
-        private FinInstnId finInstnId;
-    }
-
-    @Data
-    @XmlAccessorType(XmlAccessType.FIELD)
-    public static class CdtrAgtAcct {
-
-        @XmlElement(name = "Id")
-        private Id id;
-    }
-
+    /** Financial institution creditor — identified by BICFI only */
     @Data
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class Cdtr {
 
-        @XmlElement(name = "Nm")
-        private String nm;
-
-        @XmlElement(name = "PstlAdr")
-        private PstlAdr pstlAdr;
-    }
-
-    @Data
-    @XmlAccessorType(XmlAccessType.FIELD)
-    public static class InstrForNxtAgt {
-
-        @XmlElement(name = "InstrInf")
-        private String instrInf;
+        @XmlElement(name = "FinInstnId")
+        private FinInstnId finInstnId;
     }
 
     @Data
@@ -350,6 +282,14 @@ public class DataPDU {
 
         @XmlElement(name = "Id")
         private Id id;
+    }
+
+    @Data
+    @XmlAccessorType(XmlAccessType.FIELD)
+    public static class InstrForNxtAgt {
+
+        @XmlElement(name = "InstrInf")
+        private String instrInf;
     }
 
     @Data
@@ -366,13 +306,5 @@ public class DataPDU {
 
         @XmlElement(name = "Id")
         private String id;
-    }
-
-    @Data
-    @XmlAccessorType(XmlAccessType.FIELD)
-    public static class RmtInf {
-
-        @XmlElement(name = "Ustrd")
-        private String ustrd;
     }
 }

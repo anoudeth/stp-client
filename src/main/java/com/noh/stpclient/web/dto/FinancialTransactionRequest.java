@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -28,7 +27,7 @@ public record FinancialTransactionRequest(
     /**
      * DTO for the financial transaction data.
      */
-    @Schema(description = "SWIFT pacs.008 / RTGS transaction fields")
+    @Schema(description = "SWIFT pacs.008 / pacs.009 RTGS transaction fields. Fields marked (pacs.008 only) are not required for pacs.009.")
     public record TransactionData(
             @NotBlank(message = "Message ID cannot be blank")
             @Schema(description = "Unique message identifier", example = "MSG20260314001")
@@ -83,43 +82,36 @@ public record FinancialTransactionRequest(
             @Schema(description = "Value/settlement date (YYYY-MM-DD)", example = "2026-03-14")
             String settlementDate,
 
-            @NotBlank(message = "Debtor name cannot be blank")
-            @Schema(description = "Full name of the debtor", example = "Lao Brewery Co., Ltd.")
+            @Schema(description = "(pacs.008 only) Full name of the debtor", example = "Lao Brewery Co., Ltd.")
             String debtorName,
 
-            @NotBlank(message = "Debtor account cannot be blank")
-            @Schema(description = "Debtor's account number", example = "0100001234567")
+            @Schema(description = "(pacs.008 only) Debtor's account number", example = "0100001234567")
             String debtorAccount,
 
             @NotBlank(message = "Debtor agent account cannot be blank")
-            @Schema(description = "Debtor agent's nostro/settlement account", example = "0199990000001")
+            @Schema(description = "Debtor agent's nostro/settlement account (pacs.008: DbtrAgtAcct, pacs.009: DbtrAcct)", example = "0199990000001")
             String debtorAgentAccount,
 
-            @NotBlank(message = "Creditor name cannot be blank")
-            @Schema(description = "Full name of the creditor", example = "Phongsavanh Bank")
+            @Schema(description = "(pacs.008 only) Full name of the creditor", example = "Phongsavanh Bank")
             String creditorName,
 
-            @NotBlank(message = "Creditor account cannot be blank")
-            @Schema(description = "Creditor's account number", example = "0200007654321")
+            @Schema(description = "(pacs.008 only) Creditor's account number", example = "0200007654321")
             String creditorAccount,
 
             @NotBlank(message = "Creditor agent account cannot be blank")
-            @Schema(description = "Creditor agent's nostro/settlement account", example = "0299990000002")
+            @Schema(description = "Creditor agent's nostro/settlement account (pacs.008: CdtrAgtAcct, pacs.009: CdtrAcct)", example = "0299990000002")
             String creditorAgentAccount,
 
-            @NotNull(message = "Debtor address lines cannot be null")
-            @Schema(description = "Debtor's address lines (max 2 lines)", example = "[\"123 Lane Xang Avenue\", \"Vientiane, Lao PDR\"]")
+            @Schema(description = "(pacs.008 only) Debtor's address lines (max 2 lines)", example = "[\"123 Lane Xang Avenue\", \"Vientiane, Lao PDR\"]")
             List<String> debtorAddressLines,
 
-            @NotNull(message = "Creditor address lines cannot be null")
-            @Schema(description = "Creditor's address lines (max 2 lines)", example = "[\"456 Samsenthai Road\", \"Vientiane, Lao PDR\"]")
+            @Schema(description = "(pacs.008 only) Creditor's address lines (max 2 lines)", example = "[\"456 Samsenthai Road\", \"Vientiane, Lao PDR\"]")
             List<String> creditorAddressLines,
 
-            @Schema(description = "Instructions for the next agent (optional)", example = "/RETN/")
+            @Schema(description = "(pacs.009 only) Instruction information for the next agent — maps to InstrForNxtAgt/InstrInf in the Document. Optional free-text field (e.g. payment purpose or routing instruction).", example = "test pacs009 format")
             String instrForNxtAgt,
 
-            @NotBlank(message = "Remittance information cannot be blank")
-            @Schema(description = "Payment reference / remittance information", example = "Payment for invoice INV-2026-0042")
+            @Schema(description = "(pacs.008 only) Payment reference / remittance information", example = "Payment for invoice INV-2026-0042")
             String remittanceInformation
     ) {}
 }

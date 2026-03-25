@@ -4,7 +4,6 @@ import com.noh.stpclient.audit.AuditLog;
 import com.noh.stpclient.audit.AuditService;
 import com.noh.stpclient.exception.GatewayIntegrationException;
 import com.noh.stpclient.model.ServiceResult;
-import com.noh.stpclient.model.xml.DataPDU;
 import com.noh.stpclient.model.xml.GetUpdatesResponse;
 import com.noh.stpclient.model.xml.Send;
 import com.noh.stpclient.model.xml.SendResponse;
@@ -241,7 +240,7 @@ public class GwIntegrationService {
         ServiceResult<SendResponseDto> result;
         try {
             // Build and sign XML once — not repeated on session-expiry retry
-            DataPDU dataPDU = dataPDUTransformer.transformToDataPDU(request);
+            Object dataPDU = dataPDUTransformer.transformToDataPDU(request);
             String xmlContent = dataPDUTransformer.marshalToXml(dataPDU, request.transaction().msgType());
             String msgId = request.transaction().messageId();
             String ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMddHHmmss"));
