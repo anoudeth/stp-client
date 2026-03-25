@@ -15,6 +15,7 @@ import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.noh.stpclient.model.xml.SendResponseData;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -76,7 +77,7 @@ public class CryptoManager {
     private String ksPath;
     @Value("${gw.cert.alias}")
     private String gwCertAlias;
-
+    private String signedpropsIdSuffix;
 
 
     public CryptoManager() {
@@ -138,7 +139,7 @@ public class CryptoManager {
     public String signXml(String xmlString) throws Exception {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         dbf.setNamespaceAware(true);
-        org.w3c.dom.Document doc = dbf.newDocumentBuilder()
+        Document doc = dbf.newDocumentBuilder()
                 .parse(new ByteArrayInputStream(xmlString.getBytes(StandardCharsets.UTF_8)));
 
         KeyStore privateKS = loadKeystore();
@@ -148,7 +149,7 @@ public class CryptoManager {
             throw new IllegalStateException("Crypto error, failed to load private key " + keyAlias);
         }
 
-        org.w3c.dom.Document signedDoc = signDocument(doc, certToSign, privateKey);
+        Document signedDoc = signDocument(doc, certToSign, privateKey);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Transformer transformer = TransformerFactory.newInstance().newTransformer();
@@ -157,12 +158,9 @@ public class CryptoManager {
         return out.toString(StandardCharsets.UTF_8);
     }
 
-    private org.w3c.dom.Document signDocument(org.w3c.dom.Document doc,
-                                               X509Certificate signerCertificate,
-                                               PrivateKey privateKey) throws Exception {
+    private Document signDocument(Document doc, X509Certificate signerCertificate, PrivateKey privateKey) throws Exception {
         final String xadesNS = "http://uri.etsi.org/01903/v1.3.2#";
         final String signedpropsIdSuffix = "-signedprops";
-
         XMLSignatureFactory fac;
         try {
             fac = XMLSignatureFactory.getInstance("DOM", "XMLDSig");
