@@ -161,7 +161,7 @@ public class CryptoManager {
     private Document signDocument(Document doc, X509Certificate signerCertificate, PrivateKey privateKey) throws Exception {
         final String xadesNS = "http://uri.etsi.org/01903/v1.3.2#";
         final String signedpropsIdSuffix = "-signedprops";
-        XMLSignatureFactory fac;
+        XMLSignatureFactory fac = null;
         try {
             fac = XMLSignatureFactory.getInstance("DOM", "XMLDSig");
         } catch (NoSuchProviderException ex) {
@@ -170,18 +170,16 @@ public class CryptoManager {
 
         // 1. Prepare KeyInfo
         KeyInfoFactory kif = fac.getKeyInfoFactory();
-        X509IssuerSerial x509is = kif.newX509IssuerSerial(
-                signerCertificate.getIssuerX500Principal().toString(),
+        X509IssuerSerial x509is = kif.newX509IssuerSerial(signerCertificate.getIssuerX500Principal().toString(),
                 signerCertificate.getSerialNumber());
         X509Data x509data = kif.newX509Data(Collections.singletonList(x509is));
         final String keyInfoId = "_" + UUID.randomUUID().toString();
         KeyInfo ki = kif.newKeyInfo(Collections.singletonList(x509data), keyInfoId);
 
         // 2. Prepare references
-        List<Reference> refs = new ArrayList<>();
+        List<Reference> refs = new ArrayList<Reference>();
 
-        Reference ref1 = fac.newReference("#" + keyInfoId,
-                fac.newDigestMethod(DigestMethod.SHA256, null),
+        Reference ref1 = fac.newReference("#" + keyInfoId, fac.newDigestMethod(DigestMethod.SHA256, null),
                 Collections.singletonList(
                         fac.newCanonicalizationMethod(CanonicalizationMethod.EXCLUSIVE, (XMLStructure) null)),
                 null, null);
@@ -189,15 +187,13 @@ public class CryptoManager {
 
         final String signedpropsId = "_" + UUID.randomUUID().toString() + signedpropsIdSuffix;
 
-        Reference ref2 = fac.newReference("#" + signedpropsId,
-                fac.newDigestMethod(DigestMethod.SHA256, null),
+        Reference ref2 = fac.newReference("#" + signedpropsId, fac.newDigestMethod(DigestMethod.SHA256, null),
                 Collections.singletonList(
                         fac.newCanonicalizationMethod(CanonicalizationMethod.EXCLUSIVE, (XMLStructure) null)),
                 "http://uri.etsi.org/01903/v1.3.2#SignedProperties", null);
         refs.add(ref2);
 
-        Reference ref3 = fac.newReference(null,
-                fac.newDigestMethod(DigestMethod.SHA256, null),
+        Reference ref3 = fac.newReference(null, fac.newDigestMethod(DigestMethod.SHA256, null),
                 Collections.singletonList(
                         fac.newCanonicalizationMethod(CanonicalizationMethod.EXCLUSIVE, (XMLStructure) null)),
                 null, null);
@@ -205,55 +201,65 @@ public class CryptoManager {
 
         SignedInfo si = fac.newSignedInfo(
                 fac.newCanonicalizationMethod(CanonicalizationMethod.EXCLUSIVE, (XMLStructure) null),
-                fac.newSignatureMethod(SignatureMethod.RSA_SHA1, null),
-                refs);
+                fac.newSignatureMethod(SignatureMethod.RSA_SHA1, null), refs);
 
         // 3. Create element AppHdr/Sgntr that will contain the <ds:Signature>
-        NodeList appHdrNodes = doc.getElementsByTagNameNS("*", "AppHdr");
-        if (appHdrNodes.getLength() == 0) {
-            throw new IllegalStateException("Mandatory element AppHdr is missing in the document to be signed");
-        }
-        Node appHdrNode = appHdrNodes.item(0);
-        Node sgntr = appHdrNode.appendChild(doc.createElementNS(appHdrNode.getNamespaceURI(), "Sgntr"));
+        Node appHdr = null;
+        NodeList sgntrList = doc.getElementsByTagName("AppHdr");
+        if (sgntrList.getLength() != 0)
+            appHdr = sgntrList.item(0);
+
+        if (appHdr == null)
+            throw new Exception("mandatory element AppHdr is missing in the document to be signed");
+
+        Node sgntr = appHdr.appendChild(doc.createElementNS(appHdr.getNamespaceURI(), "Sgntr"));
 
         DOMSignContext dsc = new DOMSignContext(privateKey, sgntr);
         dsc.putNamespacePrefix(XMLSignature.XMLNS, "ds");
 
-        // 4. Set up <ds:Object> with <QualifyingProperties> inside that includes SigningTime
-        Element qpElement = doc.createElementNS(xadesNS, "xades:QualifyingProperties");
-        qpElement.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xades", xadesNS);
+        // 4. Set up <ds:Object> with <QualifiyingProperties> inside that includes
+        // SigningTime
+        Element QPElement = doc.createElementNS(xadesNS, "xades:QualifyingProperties");
+        QPElement.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xades", xadesNS);
 
-        Element spElement = doc.createElementNS(xadesNS, "xades:SignedProperties");
-        spElement.setAttributeNS(null, "Id", signedpropsId);
-        dsc.setIdAttributeNS(spElement, null, "Id");
-        spElement.setIdAttributeNS(null, "Id", true);
-        qpElement.appendChild(spElement);
+        Element SPElement = doc.createElementNS(xadesNS, "xades:SignedProperties");
+        SPElement.setAttributeNS(null, "Id", signedpropsId);
+        dsc.setIdAttributeNS(SPElement, null, "Id");
+        SPElement.setIdAttributeNS(null, "Id", true);
+        QPElement.appendChild(SPElement);
 
-        Element sspElement = doc.createElementNS(xadesNS, "xades:SignedSignatureProperties");
-        spElement.appendChild(sspElement);
+        Element SSPElement = doc.createElementNS(xadesNS, "xades:SignedSignatureProperties");
+        SPElement.appendChild(SSPElement);
 
-        final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-        Element stElement = doc.createElementNS(xadesNS, "xades:SigningTime");
-        stElement.appendChild(doc.createTextNode(df.format(new Date())));
-        sspElement.appendChild(stElement);
+        final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        String signingTime = df.format(new Date());
 
-        XMLObject object = fac.newXMLObject(
-                Collections.singletonList(new DOMStructure(qpElement)), null, null, null);
+        Element STElement = doc.createElementNS(xadesNS, "xades:SigningTime");
+        STElement.appendChild(doc.createTextNode(signingTime + "Z"));
+        SSPElement.appendChild(STElement);
+
+        DOMStructure qualifPropStruct = new DOMStructure(QPElement);
+
+        List<DOMStructure> xmlObj = new ArrayList<DOMStructure>();
+        xmlObj.add(qualifPropStruct);
+        XMLObject object = fac.newXMLObject(xmlObj, null, null, null);
+
+        List<XMLObject> objects = Collections.singletonList(object);
 
         // 5. Set up custom URIDereferencer to process Reference without URI.
-        // This Reference points to element <Document> of MX message.
-        NodeList docNodes = doc.getElementsByTagNameNS("*", "Document");
-        Node docNode = docNodes.item(0);
+        // This Reference points to element <Document> of MX message
+        final NodeList docNodes = doc.getElementsByTagName("Document");
+        final Node docNode = docNodes.item(0);
 
-        ByteArrayOutputStream refOut = new ByteArrayOutputStream();
+        ByteArrayOutputStream refOutputStream = new ByteArrayOutputStream();
         Transformer xform = TransformerFactory.newInstance().newTransformer();
         xform.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-        xform.transform(new DOMSource(docNode), new StreamResult(refOut));
-        InputStream refInputStream = new ByteArrayInputStream(refOut.toByteArray());
+        xform.transform(new DOMSource(docNode), new StreamResult(refOutputStream));
+        InputStream refInputStream = new ByteArrayInputStream(refOutputStream.toByteArray());
         dsc.setURIDereferencer(new NoUriDereferencer(refInputStream));
 
-        // 6. Sign it!
-        XMLSignature signature = fac.newXMLSignature(si, ki, Collections.singletonList(object), null, null);
+        // 6. sign it!
+        XMLSignature signature = fac.newXMLSignature(si, ki, objects, null, null);
         signature.sign(dsc);
 
         return doc;
@@ -275,9 +281,9 @@ public class CryptoManager {
 
         // Gateway signs the concatenation of key response fields, same UTF-16LE encoding as signValue
         String signedContent = nullToEmpty(data.getType())
-                + nullToEmpty(data.getDatetime())
-                + nullToEmpty(data.getMir())
-                + nullToEmpty(data.getRef());
+                               + nullToEmpty(data.getDatetime())
+                               + nullToEmpty(data.getMir())
+                               + nullToEmpty(data.getRef());
         byte[] contentBytes = signedContent.getBytes("UTF-16LE");
 
         CMSSignedData cms = new CMSSignedData(new CMSProcessableByteArray(contentBytes), signatureBytes);
