@@ -1,9 +1,11 @@
 package com.noh.stpclient.service;
 
 import com.noh.stpclient.audit.AuditLog;
+import com.noh.stpclient.audit.AuditRepository;
 import com.noh.stpclient.audit.AuditService;
 import com.noh.stpclient.exception.GatewayIntegrationException;
 import com.noh.stpclient.model.ServiceResult;
+import com.noh.stpclient.model.xml.GetUpdatesItem;
 import com.noh.stpclient.model.xml.GetUpdatesResponse;
 import com.noh.stpclient.model.xml.Send;
 import com.noh.stpclient.model.xml.SendResponse;
@@ -16,6 +18,7 @@ import com.noh.stpclient.web.dto.LogonResponseDto;
 import com.noh.stpclient.web.dto.SendRequest;
 import com.noh.stpclient.web.dto.SendResponseDto;
 
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,6 +26,12 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
 
 import jakarta.xml.bind.JAXBException;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +51,7 @@ public class GwIntegrationService {
     private final CryptoManager cryptoManager;
     private final DataPDUTransformer dataPDUTransformer;
     private final AuditService auditService;
+    private final AuditRepository auditRepository;
     private final SessionManager sessionManager;
 
     private static final String MSG_FORMAT = "MX";
@@ -58,6 +68,7 @@ public class GwIntegrationService {
                                 CryptoManager cryptoManager,
                                 DataPDUTransformer dataPDUTransformer,
                                 AuditService auditService,
+                                AuditRepository auditRepository,
                                 SessionManager sessionManager,
                                 @Value("${stp.soap.msg-receiver}") String msgReceiver,
                                 @Value("${stp.soap.msg-sender}") String msgSender) {
@@ -65,6 +76,7 @@ public class GwIntegrationService {
         this.cryptoManager = cryptoManager;
         this.dataPDUTransformer = dataPDUTransformer;
         this.auditService = auditService;
+        this.auditRepository = auditRepository;
         this.sessionManager = sessionManager;
         this.msgReceiver = msgReceiver;
         this.msgSender = msgSender;
@@ -139,11 +151,54 @@ public class GwIntegrationService {
         if (response == null || response.getItems() == null) {
             return ServiceResult.success(Collections.emptyList());
         }
-        List<GetUpdatesResponseDto> items = response.getItems().stream()
+        List<GetUpdatesItem> rawItems = response.getItems();
+        List<GetUpdatesResponseDto> dtos = rawItems.stream()
                 .map(GetUpdatesResponseDto::from)
                 .toList();
-        log.info("GetUpdates OK | items={}", items.size());
-        return ServiceResult.success(items);
+        log.info("GetUpdates OK | items={}", dtos.size());
+        saveGetUpdateItems(rawItems);
+        return ServiceResult.success(dtos);
+    }
+
+    private void saveGetUpdateItems(List<GetUpdatesItem> items) {
+        for (GetUpdatesItem item : items) {
+            try {
+                String msgId = extractMsgId(item.getBlock4());
+                auditRepository.insertGetUpdateItem(
+                        item.getMsgType(), msgId,
+                        item.getMsgSender(), item.getMsgReceiver(), item.getMsgFormat(),
+                        item.getMsgSubFormat(), item.getFormat(), item.getMsgSession(),
+                        item.getMsgSequence(), item.getMsgPriority(), item.getMsgUserPriority(),
+                        item.getMsgUserReference(), item.getMsgNetMir(), item.getMsgNetInputTime(),
+                        item.getMsgNetOutputDate(), item.getMsgPacResult(), item.getMsgFinValidation(),
+                        item.getMsgPde(), item.getMsgPdm(), item.getMsgCopySrvId(),
+                        item.getMsgCopySrvInfo(), item.getMsgDelNotifRq(), item.getBlock4());
+                log.info("Saved STP_GET_UPDATE | msgType={} mir={} msgId={}", item.getMsgType(), item.getMsgNetMir(), msgId);
+            } catch (Exception e) {
+                log.error("Failed to save STP_GET_UPDATE | mir={}: {}", item.getMsgNetMir(), e.getMessage());
+            }
+        }
+    }
+
+    private String extractMsgId(String block4) {
+        if (block4 == null || block4.isBlank()) return null;
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            dbf.setNamespaceAware(true);
+            Document doc = dbf.newDocumentBuilder().parse(new InputSource(new StringReader(block4)));
+            XPath xpath = XPathFactory.newInstance().newXPath();
+            // Try GrpHdr/MsgId (camt.052/053/054/025/029) then MsgHdr/MsgId (camt.010/019/034/998)
+            String ref = (String) xpath.evaluate(
+                    "(//*[local-name()='GrpHdr']/*[local-name()='MsgId'])[1]", doc, XPathConstants.STRING);
+            if (ref == null || ref.isBlank()) {
+                ref = (String) xpath.evaluate(
+                        "(//*[local-name()='MsgHdr']/*[local-name()='MsgId'])[1]", doc, XPathConstants.STRING);
+            }
+            return (ref != null && !ref.isBlank()) ? ref : null;
+        } catch (Exception e) {
+            log.warn("extractMsgId failed: {}", e.getMessage());
+            return null;
+        }
     }
 
     public ServiceResult<SendResponseDto> performSend(SendRequest request) {

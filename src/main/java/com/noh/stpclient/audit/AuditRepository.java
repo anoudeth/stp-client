@@ -88,6 +88,16 @@ public class AuditRepository {
             WHERE ID = ?
             """;
 
+    private static final String INSERT_GET_UPDATE_ITEM = """
+            INSERT INTO STP_GET_UPDATE
+                (MSG_TYPE, MSG_ID, MSG_SENDER, MSG_RECEIVER, MSG_FORMAT, MSG_SUB_FORMAT, FORMAT,
+                 MSG_SESSION, MSG_SEQUENCE, MSG_PRIORITY, MSG_USER_PRIORITY, MSG_USER_REFERENCE,
+                 MSG_NET_MIR, MSG_NET_INPUT_TIME, MSG_NET_OUTPUT_DATE, MSG_PAC_RESULT,
+                 MSG_FIN_VALIDATION, MSG_PDE, MSG_PDM, MSG_COPY_SRV_ID, MSG_COPY_SRV_INFO,
+                 MSG_DEL_NOTIF_RQ, BLOCK4, CREATED_AT)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """;
+
     private final JdbcTemplate jdbcTemplate;
 
     /**
@@ -220,6 +230,45 @@ public class AuditRepository {
             ps.setString(5, success ? null : errorCode);
             ps.setString(6, success ? null : truncate(errorMessage, 500));
             ps.setLong  (7, auditLogId);
+            return ps;
+        });
+    }
+
+    public void insertGetUpdateItem(String msgType, String msgId,
+                                    String msgSender, String msgReceiver, String msgFormat,
+                                    String msgSubFormat, String format, String msgSession,
+                                    String msgSequence, String msgPriority, String msgUserPriority,
+                                    String msgUserReference, String msgNetMir, String msgNetInputTime,
+                                    String msgNetOutputDate, String msgPacResult, String msgFinValidation,
+                                    String msgPde, String msgPdm, String msgCopySrvId,
+                                    String msgCopySrvInfo, String msgDelNotifRq, String block4) {
+        jdbcTemplate.update(connection -> {
+            OracleConnection oc = connection.unwrap(OracleConnection.class);
+            PreparedStatement ps = connection.prepareStatement(INSERT_GET_UPDATE_ITEM);
+            ps.setString   (1,  truncate(msgType, 50));
+            ps.setString   (2,  truncate(msgId, 100));
+            ps.setString   (3,  truncate(msgSender, 20));
+            ps.setString   (4,  truncate(msgReceiver, 20));
+            ps.setString   (5,  truncate(msgFormat, 10));
+            ps.setString   (6,  truncate(msgSubFormat, 10));
+            ps.setString   (7,  truncate(format, 10));
+            ps.setString   (8,  truncate(msgSession, 10));
+            ps.setString   (9,  truncate(msgSequence, 20));
+            ps.setString   (10, truncate(msgPriority, 5));
+            ps.setString   (11, truncate(msgUserPriority, 10));
+            ps.setString   (12, truncate(msgUserReference, 100));
+            ps.setString   (13, truncate(msgNetMir, 100));
+            ps.setString   (14, truncate(msgNetInputTime, 10));
+            ps.setString   (15, truncate(msgNetOutputDate, 20));
+            ps.setString   (16, truncate(msgPacResult, 50));
+            ps.setString   (17, truncate(msgFinValidation, 50));
+            ps.setString   (18, truncate(msgPde, 5));
+            ps.setString   (19, truncate(msgPdm, 5));
+            ps.setString   (20, truncate(msgCopySrvId, 50));
+            ps.setString   (21, truncate(msgCopySrvInfo, 200));
+            ps.setString   (22, truncate(msgDelNotifRq, 5));
+            ps.setClob     (23, toClob(oc, block4));
+            ps.setTimestamp(24, Timestamp.valueOf(LocalDateTime.now()));
             return ps;
         });
     }

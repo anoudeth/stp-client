@@ -23,7 +23,8 @@ stp:
     msg-receiver: LPDRLALAXATS
     msg-sender: LBBCLALABXXX
   polling:
-    enabled: false
+    enabled: true
+    # 55000=55, 10000=10s, 60000=60s, 300000=5m
     delay-ms: 55000
 
 springdoc:
