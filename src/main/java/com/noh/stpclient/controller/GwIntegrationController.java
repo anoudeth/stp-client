@@ -12,6 +12,7 @@ import com.noh.stpclient.web.dto.LogonResponseDto;
 import com.noh.stpclient.web.dto.LogoutRequest;
 import com.noh.stpclient.web.dto.SendResponseDto;
 import com.noh.stpclient.web.dto.SendAckNakRequest;
+import com.noh.stpclient.web.dto.SendXmlFileRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -160,6 +161,43 @@ public class GwIntegrationController {
 
         log.info("< Final response: {} | duration_ms={}", finalResponse, System.currentTimeMillis() - start);
         log.info("<<< END send request <<<");
+        return ResponseEntity.ok(finalResponse);
+    }
+
+    @Operation(summary = "Send from XML file", description = "Reads a saved raw XML file from the xmlfile/ directory, signs it with XAdES, and sends it to the gateway. Used to investigate signature failures by bypassing XML generation.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Transaction submitted (check resStatus; SUCCESS means gateway accepted)",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Request data is null or validation failed")
+    })
+    @PostMapping("/send-xml-file")
+    public ResponseEntity<ApiResponse<SendResponseDto>> sendXmlFile(@Valid @RequestBody ApiRequest<SendXmlFileRequest> request) {
+        log.info(">>> START sendXmlFile >>>");
+        log.info("> request body: {}", request);
+        long start = System.currentTimeMillis();
+
+        if (request.getData() == null) {
+            ApiResponse<SendResponseDto> finalResponse = responseBuilder.buildFailureResponse(
+                    ServiceResult.failure("VALIDATION-001", "Request data cannot be null"), null, Locale.getDefault());
+            return ResponseEntity.badRequest().body(finalResponse);
+        }
+
+        ServiceResult<LogonResponseDto> svRsLogon = gwIntegrationService.performLogon();
+        if (!svRsLogon.isSuccess()) {
+            ApiResponse<SendResponseDto> failureResponse = responseBuilder.buildFailureResponse(
+                    ServiceResult.failure(svRsLogon.getErrorCode(), svRsLogon.getErrorMessage()), null, Locale.getDefault());
+            return ResponseEntity.ok(failureResponse);
+        }
+
+        final String sessionId = svRsLogon.getData().sessionId();
+        ServiceResult<SendResponseDto> serviceResult = gwIntegrationService.performSendFromXmlFile(sessionId, request.getData());
+
+        ApiResponse<SendResponseDto> finalResponse = serviceResult.isSuccess()
+                ? responseBuilder.buildSuccessResponse(serviceResult.getData(), null, Locale.getDefault())
+                : responseBuilder.buildFailureResponse(serviceResult, null, Locale.getDefault());
+
+        log.info("< Final response: {} | duration_ms={}", finalResponse, System.currentTimeMillis() - start);
+        log.info("<<< END sendXmlFile request <<<");
         return ResponseEntity.ok(finalResponse);
     }
 

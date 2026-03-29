@@ -17,6 +17,7 @@ import com.noh.stpclient.web.dto.GetUpdatesResponseDto;
 import com.noh.stpclient.web.dto.LogonResponseDto;
 import com.noh.stpclient.web.dto.SendRequest;
 import com.noh.stpclient.web.dto.SendResponseDto;
+import com.noh.stpclient.web.dto.SendXmlFileRequest;
 
 import java.io.StringReader;
 import java.nio.file.Files;
@@ -341,17 +342,7 @@ public class GwIntegrationService {
     private ServiceResult<SendResponseDto> doSendFinancialTransaction(FinancialTransactionRequest request, String signedXml) throws GatewayIntegrationException {
         Send soapRequest = buildSend(request, signedXml);
         log.debug("Sending SOAP request block4:\n{}", signedXml);
-
-        SendResponse response = soapClient.send(soapRequest);
-
-        if (response == null || response.getData() == null) {
-            return ServiceResult.failure("GW-002", "Received empty response from Gateway");
-        }
-        SendResponseData data = response.getData();
-        if ("NAK".equals(data.getType())) {
-            return ServiceResult.failureWithData(SendResponseDto.from(data), data.getCode(), data.getDescription());
-        }
-        return ServiceResult.success(SendResponseDto.from(data));
+        return sendAndParseResponse(soapRequest);
     }
 
     private void saveXmlFile(String filename, String content) {
@@ -363,6 +354,77 @@ public class GwIntegrationService {
         } catch (Exception e) {
             log.warn("Failed to save XML file {}: {}", filename, e.getMessage());
         }
+    }
+
+    /**
+     * Reads a raw XML file from xmlOutputDir, signs it with XAdES, and sends to the gateway.
+     * Useful for investigating signature failures: bypasses XML generation to isolate sign/send path.
+     */
+    public ServiceResult<SendResponseDto> performSendFromXmlFile(String sessionId, SendXmlFileRequest request) {
+        Assert.hasText(sessionId, "Session ID must not be empty");
+        Assert.notNull(request, "SendXmlFileRequest cannot be null");
+
+        long start = System.currentTimeMillis();
+        ServiceResult<SendResponseDto> result;
+        try {
+            Path filePath = Paths.get(xmlOutputDir).resolve(request.filename());
+            String xmlContent = Files.readString(filePath);
+            log.info("performSendFromXmlFile | file={} size={}", request.filename(), xmlContent.length());
+
+            String signedXml = cryptoManager.signXml(xmlContent);
+            String signedFilename = request.filename().replaceFirst("\\.xml$", "") + "_signed.xml";
+            saveXmlFile(signedFilename, signedXml);
+
+            Send soapRequest = new Send();
+            soapRequest.setSessionId(sessionId);
+            Send.Message msg = new Send.Message();
+            msg.setBlock4(signedXml);
+            msg.setMsgReceiver(this.msgReceiver);
+            msg.setMsgSender(this.msgSender);
+            msg.setMsgType(request.msgType());
+            msg.setMsgSequence(request.msgSequence());
+            msg.setFormat(MSG_FORMAT);
+            soapRequest.setMessage(msg);
+
+            try {
+                result = sendAndParseResponse(soapRequest);
+            } catch (GatewayIntegrationException e) {
+                if (sessionManager.isSessionExpired(e)) {
+                    log.warn("Session {} expired during SendXmlFile — refreshing and retrying", sessionId);
+                    sessionManager.invalidate(sessionId);
+                    String freshSession = sessionManager.getOrCreate();
+                    soapRequest.setSessionId(freshSession);
+                    try {
+                        result = sendAndParseResponse(soapRequest);
+                    } catch (GatewayIntegrationException retryEx) {
+                        result = ServiceResult.failure(retryEx.getCode(), retryEx.getDescription(), retryEx.getInfo());
+                    } catch (Exception retryEx) {
+                        log.error("SendXmlFile retry failed: {}", retryEx.getMessage());
+                        result = ServiceResult.failure("GW-999", "Send from XML file failed");
+                    }
+                } else {
+                    result = ServiceResult.failure(e.getCode(), e.getDescription(), e.getInfo());
+                }
+            }
+        } catch (Exception e) {
+            log.error("Send from XML file failed for session: {}", sessionId, e);
+            result = ServiceResult.failure("GW-999", "Send from XML file failed: " + e.getMessage());
+        }
+
+        log.info("performSendFromXmlFile | sessionId={} success={} duration_ms={}", sessionId, result.isSuccess(), System.currentTimeMillis() - start);
+        return result;
+    }
+
+    private ServiceResult<SendResponseDto> sendAndParseResponse(Send soapRequest) throws GatewayIntegrationException {
+        SendResponse response = soapClient.send(soapRequest);
+        if (response == null || response.getData() == null) {
+            return ServiceResult.failure("GW-002", "Received empty response from Gateway");
+        }
+        SendResponseData data = response.getData();
+        if ("NAK".equals(data.getType())) {
+            return ServiceResult.failureWithData(SendResponseDto.from(data), data.getCode(), data.getDescription());
+        }
+        return ServiceResult.success(SendResponseDto.from(data));
     }
 
     /**

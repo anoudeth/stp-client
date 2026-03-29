@@ -141,7 +141,10 @@ public class CryptoManager {
         dbf.setNamespaceAware(true);
         Document doc = dbf.newDocumentBuilder()
                 .parse(new ByteArrayInputStream(xmlString.getBytes(StandardCharsets.UTF_8)));
+        return signXml(doc);
+    }
 
+    public String signXml(Document doc) throws Exception {
         KeyStore privateKS = loadKeystore();
         X509Certificate certToSign = (X509Certificate) privateKS.getCertificate(keyAlias);
         PrivateKey privateKey = (PrivateKey) privateKS.getKey(keyAlias, this.ksPass.toCharArray());
