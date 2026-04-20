@@ -6,7 +6,8 @@ import javax.xml.crypto.URIDereferencer;
 import javax.xml.crypto.URIReference;
 import javax.xml.crypto.URIReferenceException;
 import javax.xml.crypto.XMLCryptoContext;
-import javax.xml.crypto.dsig.XMLSignatureFactory;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -14,19 +15,16 @@ import java.io.InputStream;
  * the pre-serialized content of the {@code <Document>} element.
  * All other references are delegated to the default dereferencer.
  */
-class NoUriDereferencer implements URIDereferencer {
+public class NoUriDereferencer implements URIDereferencer {
 
-    private final InputStream refData;
+    private final byte[] content;
 
-    NoUriDereferencer(InputStream refData) {
-        this.refData = refData;
+    public NoUriDereferencer(InputStream inputStream) throws IOException {
+        this.content = inputStream.readAllBytes();
     }
 
     @Override
     public Data dereference(URIReference uriReference, XMLCryptoContext context) throws URIReferenceException {
-        if (uriReference.getURI() == null) {
-            return new OctetStreamData(refData);
-        }
-        return XMLSignatureFactory.getInstance("DOM").getURIDereferencer().dereference(uriReference, context);
+        return new OctetStreamData(new ByteArrayInputStream(content));
     }
 }
